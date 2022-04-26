@@ -4,6 +4,22 @@
  */
 package Telas;
 
+import com.cedarsoftware.util.io.JsonWriter;
+import java.awt.Color;
+import java.awt.event.ItemEvent;
+import java.awt.event.ItemListener;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.Vector;
+import javax.swing.JTable;
+import javax.swing.ListSelectionModel;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
+import javax.swing.table.DefaultTableModel;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 /**
  *
  * @author Mawluis
@@ -15,6 +31,69 @@ public class TelaPrincipal extends javax.swing.JFrame {
      */
     public TelaPrincipal() {
         initComponents();
+        tblUrl.getSelectionModel().addListSelectionListener(new RowListener());
+        spinCotaGet.setVisible(false);
+        spinCotaPost.setVisible(false);
+        spinCotaPut.setVisible(false);
+        spinCotaDelete.setVisible(false);
+        spinCotaAll.setVisible(false);
+        lblCota.setVisible(false);
+
+        //listeners do checkers:
+        chkGet.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.SELECTED) {//checkbox has been selected
+                    spinCotaGet.setVisible(true);
+                } else {//checkbox has been deselected
+                    spinCotaGet.setVisible(false);
+                };
+            }
+        });
+
+        chkPost.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.SELECTED) {//checkbox has been selected
+                    spinCotaPost.setVisible(true);
+                } else {//checkbox has been deselected
+                    spinCotaPost.setVisible(false);
+                };
+            }
+        });
+
+        chkPut.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.SELECTED) {//checkbox has been selected
+                    spinCotaPut.setVisible(true);
+                } else {//checkbox has been deselected
+                    spinCotaPut.setVisible(false);
+                };
+            }
+        });
+
+        chkDelete.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.SELECTED) {//checkbox has been selected
+                    spinCotaDelete.setVisible(true);
+                } else {//checkbox has been deselected
+                    spinCotaDelete.setVisible(false);
+                };
+            }
+        });
+
+        chkAll.addItemListener(new ItemListener() {
+            @Override
+            public void itemStateChanged(ItemEvent e) {
+                if (e.getStateChange() == ItemEvent.SELECTED) {//checkbox has been selected
+                    spinCotaAll.setVisible(true);
+                } else {//checkbox has been deselected
+                    spinCotaAll.setVisible(false);
+                };
+            }
+        });
     }
 
     /**
@@ -26,21 +105,495 @@ public class TelaPrincipal extends javax.swing.JFrame {
     // <editor-fold defaultstate="collapsed" desc="Generated Code">//GEN-BEGIN:initComponents
     private void initComponents() {
 
+        btnConcederPermissao = new javax.swing.JButton();
+        ComboBoxMetodo = new javax.swing.JComboBox<>();
+        jTextField1 = new javax.swing.JTextField();
+        jLabel1 = new javax.swing.JLabel();
+        jLabel2 = new javax.swing.JLabel();
+        lblCota = new javax.swing.JLabel();
+        jLabel4 = new javax.swing.JLabel();
+        txtURLAPI = new javax.swing.JTextField();
+        lblQueryAPI = new javax.swing.JLabel();
+        lblClientId = new javax.swing.JLabel();
+        jScrollPane1 = new javax.swing.JScrollPane();
+        jsonTxtArea = new javax.swing.JTextArea();
+        btnRemoverPermissao = new javax.swing.JButton();
+        jButton1 = new javax.swing.JButton();
+        jScrollPane2 = new javax.swing.JScrollPane();
+        tblUrl = new javax.swing.JTable();
+        jPanel1 = new javax.swing.JPanel();
+        chkGet = new javax.swing.JCheckBox();
+        spinCotaGet = new javax.swing.JSpinner();
+        spinCotaPost = new javax.swing.JSpinner();
+        spinCotaPut = new javax.swing.JSpinner();
+        spinCotaDelete = new javax.swing.JSpinner();
+        chkPost = new javax.swing.JCheckBox();
+        chkPut = new javax.swing.JCheckBox();
+        chkDelete = new javax.swing.JCheckBox();
+        spinCotaAll = new javax.swing.JSpinner();
+        chkAll = new javax.swing.JCheckBox();
+
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
+
+        btnConcederPermissao.setText("<html><font color='green'>Conceder acesso</font></html>");
+        btnConcederPermissao.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnConcederPermissaoActionPerformed(evt);
+            }
+        });
+
+        ComboBoxMetodo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "GET", "POST", "PATCH", "DELETE", "PUT", "ALL" }));
+
+        jTextField1.setText("Minha Oi");
+
+        jLabel1.setText("Sistema");
+
+        jLabel2.setText("Método");
+
+        lblCota.setText("Cota");
+
+        jLabel4.setText("URL");
+
+        txtURLAPI.setText("/api/customermanagement/v3/xpto");
+
+        lblQueryAPI.setText("API");
+
+        lblClientId.setText("client_id");
+
+        jsonTxtArea.setColumns(20);
+        jsonTxtArea.setRows(5);
+        jsonTxtArea.setText("{\n\t\"APIsPermitidas\": {\n    \"POST/api/novafibra/v1/antifraude/fechamentocaso\": {\n      \"quota\": 1\n    },\n    \"POST/trg/api/novafibra/v1/antifraude/fechamentocaso\": {\n      \"quota\": 1\n    }\n  },\n  \"APIsPermitidas_v2\": {\n    \"/api/customermanagement/v3/creditanalysis\": {\n      \"GET\": \n      {\n        \"quota\": 3\n      },\n      \"POST\": \n      {\n        \"quota\": 2\n      }\n    },\n    \"/api/customermanagement/v3/revenueStatus\": {\n      \"ALL\": {\n        \"quota\": 5\n      }\n    },\n    \"/api/customermanagement/v3/xpto\": {\n      \"PATCH\": {\n        \"quota\": 3\n      },\n      \"ALL\": {\n        \"quota\": 4\n      }\n    },\n    \"/api/customermanagement/v3/*\": {\n      \"ALL\": {\n        \"quota\": 7\n      }\n    }\n  }\n}");
+        jScrollPane1.setViewportView(jsonTxtArea);
+
+        btnRemoverPermissao.setText("<html><font color='red'>Remover acesso</font></html>");
+        btnRemoverPermissao.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnRemoverPermissaoActionPerformed(evt);
+            }
+        });
+
+        jButton1.setText("ParseJson");
+        jButton1.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                jButton1ActionPerformed(evt);
+            }
+        });
+
+        tblUrl.setModel(new javax.swing.table.DefaultTableModel(
+            new Object [][] {
+
+            },
+            new String [] {
+                "URL"
+            }
+        ) {
+            boolean[] canEdit = new boolean [] {
+                false
+            };
+
+            public boolean isCellEditable(int rowIndex, int columnIndex) {
+                return canEdit [columnIndex];
+            }
+        });
+        jScrollPane2.setViewportView(tblUrl);
+
+        chkGet.setText("GET");
+
+        chkPost.setText("POST");
+
+        chkPut.setText("PUT");
+
+        chkDelete.setText("DELETE");
+
+        chkAll.setText("ALL");
+
+        javax.swing.GroupLayout jPanel1Layout = new javax.swing.GroupLayout(jPanel1);
+        jPanel1.setLayout(jPanel1Layout);
+        jPanel1Layout.setHorizontalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(chkGet)
+                    .addComponent(chkPost)
+                    .addComponent(chkPut)
+                    .addComponent(chkDelete)
+                    .addComponent(chkAll))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addComponent(spinCotaDelete, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(spinCotaPut, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(spinCotaPost, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addComponent(spinCotaGet, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addComponent(spinCotaAll, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addContainerGap())
+        );
+        jPanel1Layout.setVerticalGroup(
+            jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(chkGet)
+                    .addComponent(spinCotaGet, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(spinCotaPost, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(chkPost))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(spinCotaPut, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(chkPut))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(spinCotaDelete, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(chkDelete))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(jPanel1Layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(spinCotaAll, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                    .addComponent(chkAll))
+                .addContainerGap())
+        );
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 400, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(ComboBoxMetodo, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(37, 37, 37))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(26, 26, 26)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(9, 9, 9)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING, false)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jLabel4)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                        .addComponent(btnRemoverPermissao, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(40, 40, 40)
+                                        .addComponent(jLabel1)
+                                        .addGap(256, 256, 256))
+                                    .addGroup(javax.swing.GroupLayout.Alignment.LEADING, layout.createSequentialGroup()
+                                        .addComponent(lblClientId)
+                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                        .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 183, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                        .addGap(44, 44, 44)
+                                        .addComponent(btnConcederPermissao, javax.swing.GroupLayout.PREFERRED_SIZE, 184, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addGap(43, 43, 43)
+                                .addComponent(jButton1))
+                            .addComponent(txtURLAPI, javax.swing.GroupLayout.PREFERRED_SIZE, 273, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(35, 35, 35)
+                                .addComponent(lblQueryAPI))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(23, 23, 23)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(jLabel2)
+                                        .addGap(37, 37, 37)
+                                        .addComponent(lblCota))
+                                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
+                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(82, 82, 82))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 517, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(35, 35, 35))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-            .addGap(0, 300, Short.MAX_VALUE)
+            .addGroup(layout.createSequentialGroup()
+                .addGap(24, 24, 24)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addGap(31, 31, 31)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 307, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(21, 21, 21)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(btnConcederPermissao, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jButton1))
+                                .addGap(12, 12, 12)
+                                .addComponent(ComboBoxMetodo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(10, 10, 10)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(jLabel4)
+                                    .addComponent(btnRemoverPermissao, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(txtURLAPI, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addComponent(lblQueryAPI)
+                                .addGap(48, 48, 48)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(jLabel2)
+                                    .addComponent(lblCota)))
+                            .addGroup(layout.createSequentialGroup()
+                                .addComponent(jLabel1)
+                                .addGap(30, 30, 30)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(lblClientId))))
+                        .addGap(18, 18, 18)
+                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                .addContainerGap(39, Short.MAX_VALUE))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
+
+
+    private void btnConcederPermissaoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConcederPermissaoActionPerformed
+//TODO verificar se tem pelo menos 1 método.
+        //String typedJson = jsonTxtArea.getText();
+        String[][] matrix = parseJsonToMatrix(jsonTxtArea.getText());
+        int posUrl = -1;
+
+        // leitura do vetor
+        for (int i = 0; i < matrix.length; i++) {
+
+            // se existir no vetor o número digitado
+            if (matrix[i].equals(txtURLAPI)) {
+                System.out.println("O índice do URL é " + i);
+                posUrl = i; //armazenando posição do vetor que o URL foi encontrado
+            } else {
+                System.out.println("Número não encontrado no vetor");
+            }
+        }
+
+        if (posUrl != -1) {//verifica se já tem o URL no vetor
+            String[][] newMatrix = new String[matrix.length][6];
+
+            newMatrix[posUrl][0] = txtURLAPI.getText();
+
+            if (chkGet.isSelected()) {
+                newMatrix[posUrl][1] = "  {\"GET\":{\"quota\":" + spinCotaGet + "}     ";
+            }
+            if (chkPost.isSelected()) {
+                newMatrix[posUrl][2] = "  {\"POST\":{\"quota\":" + spinCotaPost + "}     ";
+            }
+            if (chkPut.isSelected()) {
+                newMatrix[posUrl][3] = "  {\"PUT\":{\"quota\":" + spinCotaPut + "}     ";
+            }
+            if (chkDelete.isSelected()) {
+                newMatrix[posUrl][4] = "  {\"DELETE\":{\"quota\":" + spinCotaDelete + "}     ";
+            }
+            if (chkAll.isSelected()) {
+                newMatrix[posUrl][5] = "  {\"ALL\":{\"quota\":" + spinCotaAll + "}     ";
+            }
+        } else {//não possui dentro do vetor, acrescentar novo URL
+            String[][] newMatrix = new String[matrix.length + 1][6];
+
+            for (int i = 0; i < matrix.length; i++) {
+                for (int j = 0; j < matrix[i].length; j++) {
+                    newMatrix[i][j] = matrix[i][j];
+                    System.out.println("teste::::" + newMatrix[i][j]);
+                }
+            }
+
+            newMatrix[newMatrix.length - 1][0] = txtURLAPI.getText();
+            if (chkGet.isSelected()) {
+                newMatrix[newMatrix.length - 1][1] = "  {\"GET\":{\"quota\":" + spinCotaGet.getValue() + "} }     ";
+            }
+            if (chkPost.isSelected()) {
+                newMatrix[newMatrix.length - 1][2] = "  {\"POST\":{\"quota\":" + spinCotaPost.getValue() + "}}     ";
+            }
+            if (chkPut.isSelected()) {
+                newMatrix[newMatrix.length - 1][3] = "  {\"PUT\":{\"quota\":" + spinCotaPut.getValue() + "}  }   ";
+            }
+            if (chkDelete.isSelected()) {
+                newMatrix[newMatrix.length - 1][4] = "  {\"DELETE\":{\"quota\":" + spinCotaDelete.getValue() + "} }    ";
+            }
+            if (chkAll.isSelected()) {
+                newMatrix[newMatrix.length - 1][5] = "  {\"ALL\":{\"quota\":" + spinCotaAll.getValue() + "}   }  ";
+            }
+
+            
+            
+            
+            /*demonstração de como montar json
+            JSONObject testecota = new JSONObject();
+            JSONObject testeURL = new JSONObject();
+            JSONObject testemetodo = new JSONObject();
+            JSONObject apiPermitidasv2 = new JSONObject();
+
+            testecota.put("quota", spinCotaGet.getValue());
+            testemetodo.put("GETT", testecota);
+
+            testecota.put("quota", spinCotaPost.getValue());
+            testemetodo.put("POSTT", testecota);
+
+            testeURL.put(txtURLAPI.getText(), testemetodo);
+
+            testecota = new JSONObject();
+            testemetodo = new JSONObject();
+
+            testecota.put("quota", spinCotaDelete.getValue());
+            testemetodo.put("DELETEE", testecota);
+
+            testecota.put("quota", spinCotaAll.getValue());
+            testemetodo.put("ALLL", testecota);
+
+            testeURL.put("/OPT/*", testemetodo);
+
+            apiPermitidasv2.put("APIsPermitidas_v2", testeURL);
+
+            System.out.println("testeeeeeeeeeee:");
+            System.out.println(JsonWriter.formatJson(apiPermitidasv2.toString()));
+
+            fim-demonstração de como montar json*/
+            
+            
+            JSONObject cota = new JSONObject();
+            JSONObject metodo = new JSONObject();
+            JSONObject urlAPIObj = new JSONObject();
+
+            for (int i = 0; i < newMatrix.length; i++) {
+                for (int j = 0; j < newMatrix[i].length; j++) {
+                    if ((j != 0) && newMatrix[i][j] != null) {
+                        cota = new JSONObject(newMatrix[i][j]);
+                        String keyMetodo = cota.keys().next();
+                        int quota = (int) cota.getJSONObject(keyMetodo).getInt("quota");
+                        cota.put(newMatrix[i][0], newMatrix[i][j]);
+                        System.out.println("URL" + newMatrix[i][0] + " recebe:");
+                        System.out.println("inserido cota" + newMatrix[i][j]);
+                        System.out.println(cota.toString());
+                    }
+                }
+                urlAPIObj.put("APIsPermitidas_v2", cota);
+                cota = new JSONObject();
+            }
+            String json = urlAPIObj.toString();
+
+            json = JsonWriter.formatJson(json); //indentando   
+            jsonTxtArea.setText(json);
+            System.out.println("json:");
+            System.out.println(json);
+
+        }
+    }//GEN-LAST:event_btnConcederPermissaoActionPerformed
+
+    private void btnRemoverPermissaoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnRemoverPermissaoActionPerformed
+
+        String typedJson = jsonTxtArea.getText();
+        JSONObject APIPermitidasv2 = new JSONObject(typedJson);
+        String urlAPI = txtURLAPI.getText();
+
+        String metodoJson = ComboBoxMetodo.getSelectedItem().toString().toUpperCase();
+
+        try {
+            APIPermitidasv2.getJSONObject("APIsPermitidas_v2").getJSONObject(urlAPI).remove(metodoJson);
+            boolean vazio = APIPermitidasv2.getJSONObject("APIsPermitidas_v2").getJSONObject(urlAPI).isEmpty();
+
+            if (vazio) {
+                System.out.println("ficou vazio");
+                APIPermitidasv2.getJSONObject("APIsPermitidas_v2").remove(urlAPI);
+            } else {
+                System.out.println("não tá vazio");
+            }
+
+        } catch (JSONException je) {
+            System.out.println("deu ruim!");
+        }
+
+        String json = APIPermitidasv2.toString();
+
+        json = JsonWriter.formatJson(json); //indentando   
+        jsonTxtArea.setText(json);
+        alimentaJtable(json);
+
+
+    }//GEN-LAST:event_btnRemoverPermissaoActionPerformed
+
+    private void jButton1ActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_jButton1ActionPerformed
+        alimentaJtable(jsonTxtArea.getText());
+    }//GEN-LAST:event_jButton1ActionPerformed
+
+    public void alimentaJtable(String Json) {
+        String[][] matrix = parseJsonToMatrix(Json);
+
+        Vector<String> columnNames = new Vector<>();
+        columnNames.add("URL");
+
+        DefaultTableModel model = (DefaultTableModel) tblUrl.getModel();
+        model.setNumRows(0);
+
+        for (int i = 0; i < matrix.length; i++) {
+            Vector row = new Vector();
+            row.add(matrix[i][0].toString());
+            model.addRow(row);
+        }
+    }
+
+    private class RowListener implements ListSelectionListener {//método chamado quando é selecionado linha da tabela 2
+
+        public void valueChanged(ListSelectionEvent event) {
+            if (event.getValueIsAdjusting()) {
+                return;
+            }
+            int linhaSelecionada = tblUrl.getSelectedRow();
+
+            try {
+                String cliente = (String) tblUrl.getValueAt(linhaSelecionada, 0);
+                txtURLAPI.setText(cliente);
+            } catch (java.lang.ArrayIndexOutOfBoundsException ex) {
+                System.out.println("exceção:índice -1");
+            }
+
+        }
+    }
+
+    public String[][] parseJsonToMatrix(String typedJson) {
+
+        JSONObject jsonTypedObj = new JSONObject(typedJson);
+        jsonTypedObj = jsonTypedObj.getJSONObject("APIsPermitidas_v2");
+
+        Iterator<String> keys = jsonTypedObj.keys();
+
+        System.out.println("length:" + jsonTypedObj.length());
+
+        int matrizUrl = 0;
+        int matrizMetodo = 0;
+        String[][] matriz = new String[jsonTypedObj.length()][6]; //tabela de URLs por métodos (suporta 5 métodos)
+        while (keys.hasNext()) {
+            String key = keys.next();
+            if (jsonTypedObj.get(key) instanceof JSONObject) {
+                System.out.println("key:" + key);
+                matriz[matrizUrl][matrizMetodo] = key;
+                JSONObject jsonTypedObjMetodo = new JSONObject(typedJson);
+                jsonTypedObjMetodo = jsonTypedObj.getJSONObject(key);
+                Iterator<String> keysMetodo = jsonTypedObjMetodo.keys();
+                System.out.println("length:" + jsonTypedObjMetodo.length());
+
+                while (keysMetodo.hasNext()) {
+                    String keyMetodo = keysMetodo.next();
+                    if (jsonTypedObjMetodo.get(keyMetodo) instanceof JSONObject) {
+                        String json = "    {\"" + keyMetodo + "\": " + jsonTypedObjMetodo.get(keyMetodo).toString() + "}         ";
+
+                        json = JsonWriter.formatJson(json); //indentando   
+                        matrizMetodo++;
+                        matriz[matrizUrl][matrizMetodo] = json;
+
+                        System.out.println("json:" + matriz[matrizUrl][matrizMetodo]);
+
+                    }
+
+                }
+                matrizUrl++;
+                matrizMetodo = 0;
+            }
+        }
+        return matriz;
+    }
 
     /**
      * @param args the command line arguments
@@ -78,5 +631,32 @@ public class TelaPrincipal extends javax.swing.JFrame {
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JComboBox<String> ComboBoxMetodo;
+    private javax.swing.JButton btnConcederPermissao;
+    private javax.swing.JButton btnRemoverPermissao;
+    private javax.swing.JCheckBox chkAll;
+    private javax.swing.JCheckBox chkDelete;
+    private javax.swing.JCheckBox chkGet;
+    private javax.swing.JCheckBox chkPost;
+    private javax.swing.JCheckBox chkPut;
+    private javax.swing.JButton jButton1;
+    private javax.swing.JLabel jLabel1;
+    private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel4;
+    private javax.swing.JPanel jPanel1;
+    private javax.swing.JScrollPane jScrollPane1;
+    private javax.swing.JScrollPane jScrollPane2;
+    private javax.swing.JTextField jTextField1;
+    private javax.swing.JTextArea jsonTxtArea;
+    private javax.swing.JLabel lblClientId;
+    private javax.swing.JLabel lblCota;
+    private javax.swing.JLabel lblQueryAPI;
+    private javax.swing.JSpinner spinCotaAll;
+    private javax.swing.JSpinner spinCotaDelete;
+    private javax.swing.JSpinner spinCotaGet;
+    private javax.swing.JSpinner spinCotaPost;
+    private javax.swing.JSpinner spinCotaPut;
+    private javax.swing.JTable tblUrl;
+    private javax.swing.JTextField txtURLAPI;
     // End of variables declaration//GEN-END:variables
 }
