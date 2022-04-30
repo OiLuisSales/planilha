@@ -4,20 +4,20 @@
  */
 package Telas;
 
+import Codigo.ConexaoBD;
+import static Codigo.ConexaoBD.*;
 import com.cedarsoftware.util.io.JsonWriter;
-import java.awt.Color;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.ArrayList;
+import java.sql.SQLException;
 import java.util.Iterator;
 import java.util.Vector;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JOptionPane;
-import javax.swing.JTable;
-import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -26,6 +26,8 @@ import org.json.JSONObject;
  * @author Mawluis
  */
 public class TelaPrincipal extends javax.swing.JFrame {
+
+    public static String versao = "0.9001b";
 
     /**
      * Creates new form TelaPrincipal
@@ -40,7 +42,8 @@ public class TelaPrincipal extends javax.swing.JFrame {
         spinCotaAll.setVisible(false);
         spinCotaPatch.setVisible(false);
         lblCota.setVisible(false);
-        alimentaJtable(jsonTxtArea.getText());
+        jsonTxtArea.setText("");
+         setTitle("Ferramenta de credenciais do API. Versão:"+versao);
 
         //listeners do checkers:
         chkGet.addItemListener(new ItemListener() {
@@ -121,7 +124,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
 
         btnConcederPermissao = new javax.swing.JButton();
         ComboBoxMetodo = new javax.swing.JComboBox<>();
-        jTextField1 = new javax.swing.JTextField();
+        campoCliente = new javax.swing.JTextField();
         jLabel1 = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         lblCota = new javax.swing.JLabel();
@@ -132,7 +135,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
         jScrollPane1 = new javax.swing.JScrollPane();
         jsonTxtArea = new javax.swing.JTextArea();
         btnRemoverPermissao = new javax.swing.JButton();
-        btnParseJson = new javax.swing.JButton();
+        btnBuscarCliente = new javax.swing.JButton();
         jScrollPane2 = new javax.swing.JScrollPane();
         tblUrl = new javax.swing.JTable();
         jPanel1 = new javax.swing.JPanel();
@@ -148,10 +151,14 @@ public class TelaPrincipal extends javax.swing.JFrame {
         chkAll = new javax.swing.JCheckBox();
         chkPatch = new javax.swing.JCheckBox();
         spinCotaPatch = new javax.swing.JSpinner();
+        btnHelp = new javax.swing.JButton();
+        jLabel3 = new javax.swing.JLabel();
+        txtAPI = new javax.swing.JLabel();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
         btnConcederPermissao.setText("<html><font color='green'>Conceder acesso</font></html>");
+        btnConcederPermissao.setVisible(false);
         btnConcederPermissao.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
                 btnConcederPermissaoActionPerformed(evt);
@@ -161,7 +168,16 @@ public class TelaPrincipal extends javax.swing.JFrame {
         ComboBoxMetodo.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "GET", "POST", "PATCH", "DELETE", "PUT", "ALL" }));
         ComboBoxMetodo.setVisible(false);
 
-        jTextField1.setText("Minha Oi");
+        campoCliente.setText("MinhaOi123");
+        campoCliente.addCaretListener(e -> {
+            String currentVal = txtURLAPI.getText();
+            String campoClienteVal = campoCliente.getText();
+            if(!currentVal.isEmpty()&&!campoClienteVal.isEmpty()) {
+                btnConcederPermissao.setVisible(true);
+            }else{
+                btnConcederPermissao.setVisible(false);
+            }
+        });
 
         jLabel1.setText("Sistema");
 
@@ -171,9 +187,18 @@ public class TelaPrincipal extends javax.swing.JFrame {
 
         jLabel4.setText("URL");
 
-        txtURLAPI.setText("/api/customermanagement/v3/xpto");
+        txtURLAPI.addCaretListener(e -> {
+            String currentVal = txtURLAPI.getText();
+            String campoClienteVal = campoCliente.getText();
+            if(!currentVal.isEmpty()&&!campoClienteVal.isEmpty()) {
+                btnConcederPermissao.setVisible(true);
+            }else{
+                btnConcederPermissao.setVisible(false);
+            }
+        });
 
         lblQueryAPI.setText("API");
+        lblQueryAPI.setVisible(false);
 
         lblClientId.setText("client_id");
 
@@ -190,11 +215,11 @@ public class TelaPrincipal extends javax.swing.JFrame {
             }
         });
 
-        btnParseJson.setText("ParseJson");
-        btnParseJson.setVisible(false);
-        btnParseJson.addActionListener(new java.awt.event.ActionListener() {
+        btnBuscarCliente.setText("Buscar Cliente");
+        btnBuscarCliente.setVisible(true);
+        btnBuscarCliente.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(java.awt.event.ActionEvent evt) {
-                btnParseJsonActionPerformed(evt);
+                btnBuscarClienteActionPerformed(evt);
             }
         });
 
@@ -264,8 +289,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, jPanel1Layout.createSequentialGroup()
                         .addComponent(chkPatch)
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(spinCotaPatch, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(0, 0, 0)))
+                        .addComponent(spinCotaPatch, javax.swing.GroupLayout.PREFERRED_SIZE, 60, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap())
         );
         jPanel1Layout.setVerticalGroup(
@@ -298,6 +322,19 @@ public class TelaPrincipal extends javax.swing.JFrame {
                 .addGap(0, 0, Short.MAX_VALUE))
         );
 
+        btnHelp.setIcon(new javax.swing.ImageIcon(getClass().getResource("/Imagens/questionMark.png"))); // NOI18N
+        btnHelp.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnHelpActionPerformed(evt);
+            }
+        });
+
+        jLabel3.setText("Preview Json");
+
+        txtAPI.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
+        txtAPI.setText("API");
+        txtAPI.setVisible(false);
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
@@ -305,211 +342,475 @@ public class TelaPrincipal extends javax.swing.JFrame {
             .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(44, 44, 44)
-                        .addComponent(lblClientId)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, 183, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(75, 75, 75)
-                        .addComponent(jLabel1))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(49, 49, 49)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addComponent(lblQueryAPI)
-                                    .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addComponent(jLabel2)
-                                        .addGap(37, 37, 37)
-                                        .addComponent(lblCota))
-                                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                                        .addComponent(ComboBoxMetodo, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addComponent(btnRemoverPermissao, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addGap(75, 75, 75)
+                                        .addComponent(jLabel1))
                                     .addGroup(layout.createSequentialGroup()
-                                        .addGap(11, 11, 11)
-                                        .addComponent(btnParseJson)))
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 92, Short.MAX_VALUE)
-                                .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                        .addGap(491, 491, 491)
+                                        .addComponent(jLabel4)))
+                                .addGap(220, 220, 220))
                             .addGroup(layout.createSequentialGroup()
-                                .addComponent(btnConcederPermissao, javax.swing.GroupLayout.PREFERRED_SIZE, 184, javax.swing.GroupLayout.PREFERRED_SIZE)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addGroup(layout.createSequentialGroup()
-                                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                                        .addComponent(txtURLAPI, javax.swing.GroupLayout.PREFERRED_SIZE, 273, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                        .addGap(83, 83, 83))
+                                        .addGap(49, 49, 49)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                            .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                            .addGroup(layout.createSequentialGroup()
+                                                .addComponent(jLabel2)
+                                                .addGap(37, 37, 37)
+                                                .addComponent(lblCota))
+                                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                                                .addComponent(ComboBoxMetodo, javax.swing.GroupLayout.PREFERRED_SIZE, 96, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                                .addComponent(btnRemoverPermissao, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
                                     .addGroup(layout.createSequentialGroup()
-                                        .addGap(258, 258, 258)
-                                        .addComponent(jLabel4)
-                                        .addGap(0, 0, Short.MAX_VALUE)))))))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 58, Short.MAX_VALUE)
-                .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 517, javax.swing.GroupLayout.PREFERRED_SIZE)
-                .addGap(185, 185, 185))
+                                        .addGap(38, 38, 38)
+                                        .addComponent(btnConcederPermissao, javax.swing.GroupLayout.PREFERRED_SIZE, 184, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addComponent(txtURLAPI, javax.swing.GroupLayout.PREFERRED_SIZE, 452, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 28, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(28, 28, 28)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addComponent(lblClientId)
+                                        .addGap(224, 224, 224)
+                                        .addComponent(btnBuscarCliente))
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(56, 56, 56)
+                                        .addComponent(campoCliente, javax.swing.GroupLayout.PREFERRED_SIZE, 183, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(298, 298, 298)
+                                .addComponent(lblQueryAPI)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addGap(0, 0, Short.MAX_VALUE)
+                        .addComponent(txtAPI)
+                        .addGap(59, 59, 59)))
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 517, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap())
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(jLabel3)
+                        .addGap(189, 189, 189))
+                    .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                        .addComponent(btnHelp)
+                        .addGap(25, 25, 25))))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(92, 92, 92)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 726, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addGap(21, 21, 21)
+                        .addComponent(jLabel1))
                     .addGroup(layout.createSequentialGroup()
+                        .addContainerGap()
+                        .addComponent(btnHelp)))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(campoCliente, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lblClientId)
+                            .addComponent(btnBuscarCliente))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 702, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap())
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel3)
+                        .addGap(0, 0, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGap(74, 74, 74)
+                        .addComponent(jLabel4)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(txtURLAPI, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(btnConcederPermissao, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblQueryAPI)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addGap(24, 24, 24)
-                                .addComponent(jLabel1)
-                                .addGap(30, 30, 30)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jTextField1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                                    .addComponent(lblClientId))
-                                .addGap(52, 52, 52)
-                                .addComponent(btnConcederPermissao, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(132, 132, 132)
-                                .addComponent(jLabel4)
-                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                                .addComponent(txtURLAPI, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                        .addGap(29, 29, 29)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addComponent(lblQueryAPI)
-                                .addGap(27, 27, 27)
+                                .addGap(43, 43, 43)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                                     .addComponent(jLabel2)
                                     .addComponent(lblCota))
                                 .addGap(18, 18, 18)
                                 .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                             .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(btnParseJson)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGap(18, 18, 18)
+                        .addComponent(txtAPI)
+                        .addGap(61, 61, 61)
                         .addComponent(btnRemoverPermissao, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
                         .addGap(18, 18, 18)
-                        .addComponent(ComboBoxMetodo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(53, Short.MAX_VALUE))
+                        .addComponent(ComboBoxMetodo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
         );
 
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-
+    public void setarJsonTxtArea(String json) {
+        jsonTxtArea.setText(json);
+    }
     private void btnConcederPermissaoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConcederPermissaoActionPerformed
-        String[][] matrix = parseJsonToMatrix(jsonTxtArea.getText());
-        int posUrl = -1;
-
-        // leitura do vetor
-        for (int i = 0; i < matrix.length; i++) {
-
-            // se existir no vetor o número digitado
-            if (matrix[i][0].equals(txtURLAPI.getText())) {
-
-                posUrl = i; //armazenando posição do vetor que o URL foi encontrado
+        
+        //TODO senão existir client_id e nem sistema, não fazer a inclusão e criar nova tela para criação de cliente
+        if (!getClient_id().equals(campoCliente.getText())) {//força o insertSistema esteja alimentado, caso o usuário não tenha clicado em buscar.
+            setClient_id(campoCliente.getText());
+            ConexaoBD conexaobd = new ConexaoBD();
+            try {
+                conexaobd.buscarClient_Id(getClient_id());//após rodar, também alimentará setInsertSistema()
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
 
-        if (posUrl != -1) {//verifica se já tem o URL no vetor
 
-            matrix[posUrl][0] = txtURLAPI.getText();
+        setInsertURL(txtURLAPI.getText());
+        ConexaoBD conexaobd = new ConexaoBD();
+        boolean pelomenos1 = false;
+        if (chkGet.isSelected()) {
+            pelomenos1 = true;
+        }
+        if (chkPost.isSelected()) {
+            pelomenos1 = true;
+        }
+        if (chkPut.isSelected()) {
+            pelomenos1 = true;
+        }
+        if (chkDelete.isSelected()) {
+            pelomenos1 = true;
+        }
+        if (chkAll.isSelected()) {
+            pelomenos1 = true;
+        }
+        if (chkPatch.isSelected()) {
+            pelomenos1 = true;
+        }
+        if (!pelomenos1) {
+            String typedJson = jsonTxtArea.getText();
+            if (typedJson.isEmpty()) {
+                typedJson = "{\"APIsPermitidas_v2\":{}}";
+            }
+            JSONObject APIPermitidasv2 = new JSONObject(typedJson);
+            String urlAPI = txtURLAPI.getText();
 
-            boolean pelomenos1 = false;
-            if (chkGet.isSelected()) {
-                matrix[posUrl][1] = "  {\"GET\":{\"quota\":" + spinCotaGet.getValue() + "} }     ";
-                pelomenos1 = true;
-            } else {
-                matrix[posUrl][1] = null;
-            }
-            if (chkPost.isSelected()) {
-                matrix[posUrl][2] = "  {\"POST\":{\"quota\":" + spinCotaPost.getValue() + "}}     ";
-                pelomenos1 = true;
-            } else {
-                matrix[posUrl][2] = null;
-            }
-            if (chkPut.isSelected()) {
-                matrix[posUrl][3] = "  {\"PUT\":{\"quota\":" + spinCotaPut.getValue() + "}  }   ";
-                pelomenos1 = true;
-            } else {
-                matrix[posUrl][3] = null;
-            }
-            if (chkDelete.isSelected()) {
-                matrix[posUrl][4] = "  {\"DELETE\":{\"quota\":" + spinCotaDelete.getValue() + "} }    ";
-                pelomenos1 = true;
-            } else {
-                matrix[posUrl][4] = null;
-            }
-            if (chkAll.isSelected()) {
-                matrix[posUrl][5] = "  {\"ALL\":{\"quota\":" + spinCotaAll.getValue() + "}   }  ";
-                pelomenos1 = true;
-            } else {
-                matrix[posUrl][5] = null;
-            }
-            if (chkPatch.isSelected()) {
-                matrix[posUrl][6] = "  {\"PATCH\":{\"quota\":" + spinCotaPatch.getValue() + "}   }  ";
-                pelomenos1 = true;
-            } else {
-                matrix[posUrl][6] = null;
-            }
-            if (!pelomenos1) {
-                String typedJson = jsonTxtArea.getText();
-                JSONObject APIPermitidasv2 = new JSONObject(typedJson);
-                String urlAPI = txtURLAPI.getText();
+            String message = "Não foi encontrado nenhum método. Deseja apagar o URL" + urlAPI + "?";
+            String title = "Confirmação";
 
-                String message = "Não foi encontrado nenhum método. Deseja apagar o URL" + urlAPI + "?";
-                String title = "Confirmação";
-
-                int reply = JOptionPane.showConfirmDialog(null, message, title, JOptionPane.YES_NO_OPTION);//Exibe caixa de dialogo (veja figura) solicitando confirmação ou não. 
-                if (reply == JOptionPane.YES_OPTION) {//Se o usuário clicar em "Sim" retorna 0 pra variavel reply, se informado não retorna 1
-                    APIPermitidasv2.getJSONObject("APIsPermitidas_v2").remove(urlAPI);
-                    String json = APIPermitidasv2.toString();
-                    System.out.println("reply:" + reply);
-                    json = JsonWriter.formatJson(json); //indentando   
-                    jsonTxtArea.setText(json);
-                    alimentaJtable(json);
-                    JOptionPane.showMessageDialog(rootPane, "URL " + urlAPI + " deletado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+            int reply = JOptionPane.showConfirmDialog(null, message, title, JOptionPane.YES_NO_OPTION);//Exibe caixa de dialogo (veja figura) solicitando confirmação ou não. 
+            if (reply == JOptionPane.YES_OPTION) {//Se o usuário clicar em "Sim" retorna 0 pra variavel reply, se informado não retorna 1
+                setInsertApagar(true);//Dar update no ATIVO = f em todos métodos desse URL, inserir linha com registro da exclusão
+                APIPermitidasv2.getJSONObject("APIsPermitidas_v2").remove(urlAPI);
+                String json = APIPermitidasv2.toString();
+                System.out.println("reply:" + reply);
+                json = JsonWriter.formatJson(json); //indentando   
+                jsonTxtArea.setText(json);
+                alimentaJtable(json);
+                try {
+                    conexaobd.maxInsercao();
+                } catch (ClassNotFoundException ex) {
+                    Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
                 }
-            } else {
-                gerarJson(matrix);
+
+                try {//conseguindo API TODO melhorar para não ter que buscar o nome do API no banco, e sim, num array quando apertar o buscarCliente
+                    setInsertAPI(conexaobd.buscarAPI(getInsertURL()));
+                } catch (ClassNotFoundException ex) {
+                    Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (SQLException ex) {
+                    Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+                try {
+                    conexaobd.inativador(getInsertURL(), getClient_id());//método chama query para desativar tudo que tem no banco com esse URL e client_id antes de colocar os métodos novos. 
+                } catch (ClassNotFoundException ex) {
+                    Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                } catch (SQLException ex) {
+                    Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                }
+
+                JOptionPane.showMessageDialog(rootPane, "URL " + urlAPI + " deletado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
+            }
+        } else {
+
+            try {
+                conexaobd.maxInsercao();
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
             }
 
-        } else {//não possui dentro do vetor, acrescentar novo URL
-            String[][] newMatrix = new String[matrix.length + 1][7];
+            try {//conseguindo API TODO melhorar para não ter que buscar o nome do API no banco, e sim, num array quando apertar o buscarCliente
+                setInsertAPI(conexaobd.buscarAPI(getInsertURL()));
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (SQLException ex) {
+                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+            }
 
+            try {
+                conexaobd.inativador(getInsertURL(), getClient_id());//método chama query para desativar tudo que tem no banco com esse URL e client_id antes de colocar os métodos novos. 
+            } catch (ClassNotFoundException ex) {
+                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+            } catch (SQLException ex) {
+                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+            }
+
+            String[][] matrix = parseJsonToMatrix(jsonTxtArea.getText());
+            int posUrl = -1;
+
+            // leitura do vetor
             for (int i = 0; i < matrix.length; i++) {
-                for (int j = 0; j < matrix[i].length; j++) {
-                    newMatrix[i][j] = matrix[i][j];
+
+                // se existir no vetor o número digitado
+                if (matrix[i][0].equals(txtURLAPI.getText())) {
+
+                    posUrl = i; //armazenando posição do vetor que o URL foi encontrado
                 }
             }
 
-            boolean peloMenos1 = false;
-            newMatrix[newMatrix.length - 1][0] = txtURLAPI.getText();
-            if (chkGet.isSelected()) {
-                newMatrix[newMatrix.length - 1][1] = "  {\"GET\":{\"quota\":" + spinCotaGet.getValue() + "} }     ";
-                peloMenos1 = true;
-            }
-            if (chkPost.isSelected()) {
-                newMatrix[newMatrix.length - 1][2] = "  {\"POST\":{\"quota\":" + spinCotaPost.getValue() + "}}     ";
-                peloMenos1 = true;
-            }
-            if (chkPut.isSelected()) {
-                newMatrix[newMatrix.length - 1][3] = "  {\"PUT\":{\"quota\":" + spinCotaPut.getValue() + "}  }   ";
-                peloMenos1 = true;
-            }
-            if (chkDelete.isSelected()) {
-                newMatrix[newMatrix.length - 1][4] = "  {\"DELETE\":{\"quota\":" + spinCotaDelete.getValue() + "} }    ";
-                peloMenos1 = true;
-            }
-            if (chkAll.isSelected()) {
-                newMatrix[newMatrix.length - 1][5] = "  {\"ALL\":{\"quota\":" + spinCotaAll.getValue() + "}   }  ";
-                peloMenos1 = true;
-            }
-            if (chkPatch.isSelected()) {
-                newMatrix[newMatrix.length - 1][6] = "  {\"PATCH\":{\"quota\":" + spinCotaPatch.getValue() + "}   }  ";
-                peloMenos1 = true;
-            }
-            
-            if (!peloMenos1){
-                JOptionPane.showMessageDialog(rootPane, "Favor escolher ao menos um método", "Erro", JOptionPane.ERROR_MESSAGE);
-            }else{
-                gerarJson(newMatrix);
+            if (posUrl != -1) {//verifica se já tem o URL no vetor
+
+                matrix[posUrl][0] = txtURLAPI.getText();
+
+                setInsertURL(txtURLAPI.getText());
+
+                pelomenos1 = false;
+                if (chkGet.isSelected()) {
+                    matrix[posUrl][1] = "  {\"GET\":{\"quota\":" + spinCotaGet.getValue() + "} }     ";
+                    pelomenos1 = true;
+
+                    setInsertMetodo("GET");
+                    setInsertCota(Integer.parseInt(spinCotaGet.getValue().toString()));
+
+                    //INSERT NO BANCO
+                    try {
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                    } catch (ClassNotFoundException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                } else {
+                    matrix[posUrl][1] = null;
+                }
+                if (chkPost.isSelected()) {
+                    matrix[posUrl][2] = "  {\"POST\":{\"quota\":" + spinCotaPost.getValue() + "}}     ";
+                    pelomenos1 = true;
+
+                    setInsertMetodo("POST");
+                    setInsertCota(Integer.parseInt(spinCotaPost.getValue().toString()));
+
+                    //INSERT NO BANCO
+                    try {
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                    } catch (ClassNotFoundException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                } else {
+                    matrix[posUrl][2] = null;
+                }
+                if (chkPut.isSelected()) {
+                    matrix[posUrl][3] = "  {\"PUT\":{\"quota\":" + spinCotaPut.getValue() + "}  }   ";
+                    pelomenos1 = true;
+
+                    setInsertMetodo("PUT");
+                    setInsertCota(Integer.parseInt(spinCotaPut.getValue().toString()));
+
+                    //INSERT NO BANCO
+                    try {
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                    } catch (ClassNotFoundException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                } else {
+                    matrix[posUrl][3] = null;
+                }
+                if (chkDelete.isSelected()) {
+                    matrix[posUrl][4] = "  {\"DELETE\":{\"quota\":" + spinCotaDelete.getValue() + "} }    ";
+                    pelomenos1 = true;
+
+                    setInsertMetodo("DELETE");
+                    setInsertCota(Integer.parseInt(spinCotaDelete.getValue().toString()));
+
+                    //INSERT NO BANCO
+                    try {
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                    } catch (ClassNotFoundException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                } else {
+                    matrix[posUrl][4] = null;
+                }
+                if (chkAll.isSelected()) {
+                    matrix[posUrl][5] = "  {\"ALL\":{\"quota\":" + spinCotaAll.getValue() + "}   }  ";
+                    pelomenos1 = true;
+
+                    setInsertMetodo("ALL");
+                    setInsertCota(Integer.parseInt(spinCotaAll.getValue().toString()));
+
+                    //INSERT NO BANCO
+                    try {
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                    } catch (ClassNotFoundException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                } else {
+                    matrix[posUrl][5] = null;
+                }
+                if (chkPatch.isSelected()) {
+                    matrix[posUrl][6] = "  {\"PATCH\":{\"quota\":" + spinCotaPatch.getValue() + "}   }  ";
+                    pelomenos1 = true;
+
+                    setInsertMetodo("PATCH");
+                    setInsertCota(Integer.parseInt(spinCotaPatch.getValue().toString()));
+
+                    //INSERT NO BANCO
+                    try {
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                    } catch (ClassNotFoundException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                } else {
+                    matrix[posUrl][6] = null;
+                }
+                if (!pelomenos1) {
+                    //já tratado
+                } else {
+                    gerarJson(matrix);
+
+                }
+
+            } else {//não possui dentro do vetor, acrescentar novo URL    //TODO insert no banco
+                String[][] newMatrix = new String[matrix.length + 1][7];
+
+                for (int i = 0; i < matrix.length; i++) {
+                    for (int j = 0; j < matrix[i].length; j++) {
+                        newMatrix[i][j] = matrix[i][j];
+                    }
+                }
+
+                boolean peloMenos1 = false;
+                newMatrix[newMatrix.length - 1][0] = getInsertURL();
+                if (chkGet.isSelected()) {
+                    newMatrix[newMatrix.length - 1][1] = "  {\"GET\":{\"quota\":" + spinCotaGet.getValue() + "} }     ";
+                    peloMenos1 = true;
+                    setInsertMetodo("GET");
+                    setInsertCota(Integer.parseInt(spinCotaGet.getValue().toString()));
+
+                    //INSERT NO BANCO
+                    try {
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                    } catch (ClassNotFoundException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                if (chkPost.isSelected()) {
+                    newMatrix[newMatrix.length - 1][2] = "  {\"POST\":{\"quota\":" + spinCotaPost.getValue() + "}}     ";
+                    peloMenos1 = true;
+
+                    setInsertMetodo("POST");
+                    setInsertCota(Integer.parseInt(spinCotaPost.getValue().toString()));
+
+                    //INSERT NO BANCO
+                    try {
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                    } catch (ClassNotFoundException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                if (chkPut.isSelected()) {
+                    newMatrix[newMatrix.length - 1][3] = "  {\"PUT\":{\"quota\":" + spinCotaPut.getValue() + "}  }   ";
+                    peloMenos1 = true;
+
+                    setInsertMetodo("PUT");
+                    setInsertCota(Integer.parseInt(spinCotaPut.getValue().toString()));
+
+                    //INSERT NO BANCO
+                    try {
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                    } catch (ClassNotFoundException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                if (chkDelete.isSelected()) {
+                    newMatrix[newMatrix.length - 1][4] = "  {\"DELETE\":{\"quota\":" + spinCotaDelete.getValue() + "} }    ";
+                    peloMenos1 = true;
+
+                    setInsertMetodo("DELETE");
+                    setInsertCota(Integer.parseInt(spinCotaDelete.getValue().toString()));
+
+                    //INSERT NO BANCO
+                    try {
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                    } catch (ClassNotFoundException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                if (chkAll.isSelected()) {
+                    newMatrix[newMatrix.length - 1][5] = "  {\"ALL\":{\"quota\":" + spinCotaAll.getValue() + "}   }  ";
+                    peloMenos1 = true;
+
+                    setInsertMetodo("ALL");
+                    setInsertCota(Integer.parseInt(spinCotaAll.getValue().toString()));
+
+                    //INSERT NO BANCO
+                    try {
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                    } catch (ClassNotFoundException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                if (chkPatch.isSelected()) {
+                    newMatrix[newMatrix.length - 1][6] = "  {\"PATCH\":{\"quota\":" + spinCotaPatch.getValue() + "}   }  ";
+                    peloMenos1 = true;
+
+                    setInsertMetodo("PATCH");
+                    setInsertCota(Integer.parseInt(spinCotaPatch.getValue().toString()));
+
+                    //INSERT NO BANCO
+                    try {
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                    } catch (ClassNotFoundException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    } catch (SQLException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+
+                if (!peloMenos1) {
+                    JOptionPane.showMessageDialog(rootPane, "Favor escolher ao menos um método", "Erro", JOptionPane.ERROR_MESSAGE);
+                } else {
+                    gerarJson(newMatrix);
+                }
             }
         }
     }//GEN-LAST:event_btnConcederPermissaoActionPerformed
@@ -541,7 +842,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
         alimentaJtable(json);
     }//GEN-LAST:event_btnRemoverPermissaoActionPerformed
 
-    public String gerarJson(String newMatrix[][]) {
+    public static String gerarJson(String newMatrix[][]) {
 
         JSONObject cota = new JSONObject();
         JSONObject metodo = new JSONObject();
@@ -573,11 +874,23 @@ public class TelaPrincipal extends javax.swing.JFrame {
 
         return json;
     }
-    private void btnParseJsonActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnParseJsonActionPerformed
-        alimentaJtable(jsonTxtArea.getText());
-    }//GEN-LAST:event_btnParseJsonActionPerformed
+    private void btnBuscarClienteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarClienteActionPerformed
+        txtURLAPI.setText("");
+        txtAPI.setVisible(false);
+        setClient_id(campoCliente.getText());//TODO fazer buscar inteligente, pelo sistema também
+        ConexaoBD conexaobd = new ConexaoBD();
+        try {
+            conexaobd.buscarClient_Id(getClient_id());//após rodar, também alimentará setInsertSistema()
+        } catch (ClassNotFoundException ex) {
+            Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_btnBuscarClienteActionPerformed
 
-    public void alimentaJtable(String Json) {
+    private void btnHelpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHelpActionPerformed
+        JOptionPane.showMessageDialog(null, "Versão " + versao + ". (JDK 18).\nDesenvolvido por Luis Sales (luis.sales@oi.br.net).\n");
+    }//GEN-LAST:event_btnHelpActionPerformed
+
+    public static void alimentaJtable(String Json) {
         String[][] matrix = parseJsonToMatrix(Json);
 
         Vector<String> columnNames = new Vector<>();
@@ -602,8 +915,27 @@ public class TelaPrincipal extends javax.swing.JFrame {
             int linhaSelecionada = tblUrl.getSelectedRow();
 
             try {
-                String cliente = (String) tblUrl.getValueAt(linhaSelecionada, 0);
-                txtURLAPI.setText(cliente);
+                String urlApi = (String) tblUrl.getValueAt(linhaSelecionada, 0);
+                txtURLAPI.setText(urlApi);
+
+                txtAPI.setVisible(false);
+
+                new Thread() {
+                    @Override
+                    public void run() {
+
+                        ConexaoBD conexaobd = new ConexaoBD();
+                        try {
+                            String api_outdoor = conexaobd.getAPI(urlApi);
+                            api_outdoor = "<html><font color='blue'>" + api_outdoor + "</font></html>";
+                            txtAPI.setText(api_outdoor);
+                            txtAPI.setVisible(true);
+                        } catch (ClassNotFoundException ex) {
+                            Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+
+                    }
+                }.start();
 
                 String matrix[][] = parseJsonToMatrix(jsonTxtArea.getText());
 
@@ -622,7 +954,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
                                 JSONObject metodo = new JSONObject(matrix[i][j]);
                                 String keyMetodo = metodo.keys().next();
                                 int quota = (int) metodo.getJSONObject(keyMetodo).getInt("quota");
-                                switch (keyMetodo) {
+                                switch (keyMetodo) {//TODO implementar a mesma coisa quando digitar algo no URL e client_id, vir tudo. para o caso do cliente não ter nenhum método a ser clicado na jtable
                                     case "GET":
                                         chkGet.setSelected(true);
                                         spinCotaGet.setValue(quota);
@@ -662,8 +994,10 @@ public class TelaPrincipal extends javax.swing.JFrame {
         }
     }
 
-    public String[][] parseJsonToMatrix(String typedJson) {
-
+    public static String[][] parseJsonToMatrix(String typedJson) {
+        if (typedJson.isEmpty()) {
+            typedJson = "{\"APIsPermitidas_v2\":{}}";
+        }
         JSONObject jsonTypedObj = new JSONObject(typedJson);
         jsonTypedObj = jsonTypedObj.getJSONObject("APIsPermitidas_v2");
 
@@ -706,6 +1040,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
          */
+        
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -731,12 +1066,17 @@ public class TelaPrincipal extends javax.swing.JFrame {
             }
         });
     }
+    public void main (){
+         new TelaPrincipal().setVisible(true);
+    }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
     private javax.swing.JComboBox<String> ComboBoxMetodo;
+    private javax.swing.JButton btnBuscarCliente;
     private javax.swing.JButton btnConcederPermissao;
-    private javax.swing.JButton btnParseJson;
+    private javax.swing.JButton btnHelp;
     private javax.swing.JButton btnRemoverPermissao;
+    private javax.swing.JTextField campoCliente;
     private javax.swing.JCheckBox chkAll;
     private javax.swing.JCheckBox chkDelete;
     private javax.swing.JCheckBox chkGet;
@@ -745,12 +1085,12 @@ public class TelaPrincipal extends javax.swing.JFrame {
     private javax.swing.JCheckBox chkPut;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
     private javax.swing.JPanel jPanel1;
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
-    private javax.swing.JTextField jTextField1;
-    private javax.swing.JTextArea jsonTxtArea;
+    public static javax.swing.JTextArea jsonTxtArea;
     private javax.swing.JLabel lblClientId;
     private javax.swing.JLabel lblCota;
     private javax.swing.JLabel lblQueryAPI;
@@ -760,7 +1100,8 @@ public class TelaPrincipal extends javax.swing.JFrame {
     private javax.swing.JSpinner spinCotaPatch;
     private javax.swing.JSpinner spinCotaPost;
     private javax.swing.JSpinner spinCotaPut;
-    private javax.swing.JTable tblUrl;
+    private static javax.swing.JTable tblUrl;
+    private javax.swing.JLabel txtAPI;
     private javax.swing.JTextField txtURLAPI;
     // End of variables declaration//GEN-END:variables
 }
