@@ -28,28 +28,50 @@ import com.cedarsoftware.util.io.JsonWriter;
  */
 public class GetCaPermissao {
 
-    public static String server = "https://apimhml.oi.net.br";
-    public static String api = "/teste/getclient";
-    
-    
-    
-    
-    
-    public void VerificarCredenciais(String usuario, String senha) {
-        try {
-            GetCaPermissao.call_me(usuario, senha);
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null, "Erro no método GET. " + e.getMessage(), "Erro! Exception!", JOptionPane.ERROR_MESSAGE);
-        }
+    private static String server = "https://apimhml.oi.net.br";
+    private static String urlLogin = "/teste/planilha/logar";
+    private static String urlOTK = "";
+    private static String token = "";
+
+    public static String getToken() {
+        return token;
     }
 
-    public static void call_me(String usuario, String senha) throws Exception {
+    public static void setToken(String token) {
+        GetCaPermissao.token = token;
+    }
+
+    public static String getUrlOTK() {
+        return urlOTK;
+    }
+
+    public static void setUrlOTK(String urlOTK) {
+        GetCaPermissao.urlOTK = urlOTK;
+    }
+
+    public static String getServer() {
+        return server;
+    }
+
+    public static void setServer(String server) {
+        GetCaPermissao.server = server;
+    }
+
+    public static String getUrlLogin() {
+        return urlLogin;
+    }
+
+    public static void setUrlLogin(String urlLogin) {
+        GetCaPermissao.urlLogin = urlLogin;
+    }
+    
+    
+    public static void VerificarCredenciais(String usuario, String senha) throws Exception {
         //desativando a validacao de certificado.
         SSLTool ssltool = new SSLTool();
         ssltool.disableCertificateValidation();
 
-        String url = (server+api);
+        String url = (server+urlLogin);
         URL obj = new URL(url);
         HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
 
@@ -82,7 +104,8 @@ public class GetCaPermissao {
           System.out.println("----------====================-----------------------");
         } catch (IOException ex) {
             Logger.getLogger(GetCaPermissao.class.getName()).log(Level.SEVERE, null, ex);
-            JOptionPane.showMessageDialog(null, "Problemas com os parâmetros enviados!\n" + ex.getMessage(), "Erro! IOException", JOptionPane.ERROR_MESSAGE);
+          //JOptionPane.showMessageDialog(null, "Problemas com os parâmetros enviados!\n" + ex.getMessage(), "Erro! IOException", JOptionPane.ERROR_MESSAGE);//mostrando URL
+            JOptionPane.showMessageDialog(null, "Problemas com os parâmetros enviados!\n" , "Erro! IOException", JOptionPane.ERROR_MESSAGE);//sem mostrar URL
             return;
         } finally {
             if (inB != null) {
@@ -94,6 +117,12 @@ public class GetCaPermissao {
         System.out.println(responseSTR);
         System.out.println("----------====================-----------------------");
         
-     
+        JSONObject object = new JSONObject(responseSTR);
+        
+        urlOTK = object.get("URL").toString();
+        token = object.get("token").toString();
+        
+        System.out.println("URLOTK:"+urlOTK);
+        System.out.println("token:"+token);
     }
 }

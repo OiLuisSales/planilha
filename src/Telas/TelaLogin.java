@@ -5,8 +5,14 @@
 package Telas;
 
 import Apontamento.GetCaPermissao;
+import Codigo.ConexaoBD;
 import static Telas.TelaPrincipal.versao;
 import static Codigo.ConexaoBD.*;
+import Codigo.DumpCA;
+import java.io.IOException;
+import java.sql.SQLException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  *
@@ -25,8 +31,6 @@ public class TelaLogin extends javax.swing.JFrame {
     public static void setResponseCode(int responseCode) {
         TelaLogin.responseCode = responseCode;
     }
-
-
 
     /**
      * Creates new form TelaLogin
@@ -50,6 +54,9 @@ public class TelaLogin extends javax.swing.JFrame {
         btnLogin = new javax.swing.JButton();
         campoLogin = new javax.swing.JTextField();
         campoPassword = new javax.swing.JPasswordField();
+        jLabel3 = new javax.swing.JLabel();
+        listServer = new javax.swing.JComboBox<>();
+        btnDumpOTKtoSQL = new javax.swing.JButton();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -64,27 +71,52 @@ public class TelaLogin extends javax.swing.JFrame {
             }
         });
 
+        jLabel3.setText("Ambiente");
+
+        listServer.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "apimdev", "apimhml.oi.net.br", "apim.oi.net.br", "apimbss.oi.net.br", "apimhmllocal.intranet", "apimlocal.intranet", "apimbsslocal.intranet", "apimoiplay.oi.net.br", "apimoiplaylocal.intranet" }));
+
+        btnDumpOTKtoSQL.setText("DumpOTKtoSQL");
+        btnDumpOTKtoSQL.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(java.awt.event.ActionEvent evt) {
+                btnDumpOTKtoSQLActionPerformed(evt);
+            }
+        });
+
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
                 .addGap(85, 85, 85)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
-                    .addComponent(jLabel2)
-                    .addComponent(jLabel1))
-                .addGap(28, 28, 28)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addComponent(btnLogin)
-                    .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
-                        .addComponent(campoLogin)
-                        .addComponent(campoPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 121, javax.swing.GroupLayout.PREFERRED_SIZE)))
-                .addContainerGap(116, Short.MAX_VALUE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel3)
+                        .addGap(18, 18, 18)
+                        .addComponent(listServer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
+                            .addComponent(jLabel2)
+                            .addComponent(jLabel1))
+                        .addGap(28, 28, 28)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addComponent(btnLogin)
+                            .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
+                                .addComponent(campoLogin)
+                                .addComponent(campoPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 121, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                .addContainerGap(83, Short.MAX_VALUE))
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(btnDumpOTKtoSQL)
+                .addGap(21, 21, 21))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(101, Short.MAX_VALUE)
+                .addGap(23, 23, 23)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                    .addComponent(jLabel3)
+                    .addComponent(listServer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 56, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jLabel1)
                     .addComponent(campoLogin, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -94,7 +126,9 @@ public class TelaLogin extends javax.swing.JFrame {
                     .addComponent(campoPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(37, 37, 37)
                 .addComponent(btnLogin)
-                .addGap(78, 78, 78))
+                .addGap(31, 31, 31)
+                .addComponent(btnDumpOTKtoSQL)
+                .addGap(25, 25, 25))
         );
 
         pack();
@@ -104,17 +138,64 @@ public class TelaLogin extends javax.swing.JFrame {
         login = campoLogin.getText();
         setInsertUser(login);
         password = new String(campoPassword.getPassword());
+        String server = listServer.getSelectedItem().toString().toLowerCase();
+        server = "https://"+server;
+
+        switch (server) {//configurando tabela
+            case "apimdev":
+                ConexaoBD.setTableBD("\"Table_DEV_INT\"");
+                break;
+                case "apimhml.oi.net.br":
+                ConexaoBD.setTableBD("\"Table_HML_EXT\"");
+                break;
+                case "apim.oi.net.br":
+                ConexaoBD.setTableBD("\"Table_PRD_EXT\"");
+                break;
+                case "apimbss.oi.net.br":
+                ConexaoBD.setTableBD("\"Table_BSS_EXT\"");
+                break;
+                case "apimhmllocal.intranet":
+                ConexaoBD.setTableBD("\"Table_HML_INT\"");
+                break;
+                case "apimlocal.intranet":
+                ConexaoBD.setTableBD("\"Table_PRD_INT\"");
+                break;
+                case "apimbsslocal.intranet":
+                ConexaoBD.setTableBD("\"Table_BSS_INT\"");
+                break;
+                case "apimoiplaylocal.intranet":
+                ConexaoBD.setTableBD("\"Table_PLAY_INT\"");
+                break;
+                case "apimlocaloiplay.oi.net.br":
+                ConexaoBD.setTableBD("\"Table_PLAY_EXT\"");
+                break;
+        }
 
         GetCaPermissao gt = new GetCaPermissao();
-gt.VerificarCredenciais(login, password);
+        gt.setServer(server);
+        
+        try {
+            gt.VerificarCredenciais(login, password);
+        } catch (Exception ex) {
+            Logger.getLogger(TelaLogin.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        
         if (responseCode == 200) {
-new TelaPrincipal().main();
+            new TelaPrincipal().main();
             this.setVisible(false);
 
         } else {
             System.out.println("dados errados ou servidores indisponíveis");
         }
     }//GEN-LAST:event_btnLoginActionPerformed
+
+    private void btnDumpOTKtoSQLActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDumpOTKtoSQLActionPerformed
+        try {
+            DumpCA.dumpCAOTK();
+        } catch (ClassNotFoundException | SQLException | IOException ex) {
+            Logger.getLogger(TelaLogin.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }//GEN-LAST:event_btnDumpOTKtoSQLActionPerformed
 
     /**
      * @param args the command line arguments
@@ -152,10 +233,13 @@ new TelaPrincipal().main();
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
+    private javax.swing.JButton btnDumpOTKtoSQL;
     private javax.swing.JButton btnLogin;
     private javax.swing.JTextField campoLogin;
     private javax.swing.JPasswordField campoPassword;
     private javax.swing.JLabel jLabel1;
     private javax.swing.JLabel jLabel2;
+    private javax.swing.JLabel jLabel3;
+    private javax.swing.JComboBox<String> listServer;
     // End of variables declaration//GEN-END:variables
 }

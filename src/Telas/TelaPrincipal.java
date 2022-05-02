@@ -4,6 +4,7 @@
  */
 package Telas;
 
+import Apontamento.CRUDOTK;
 import Codigo.ConexaoBD;
 import static Codigo.ConexaoBD.*;
 import com.cedarsoftware.util.io.JsonWriter;
@@ -15,6 +16,7 @@ import java.util.Vector;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import javax.swing.JOptionPane;
+import javax.swing.UnsupportedLookAndFeelException;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.DefaultTableModel;
@@ -27,7 +29,7 @@ import org.json.JSONObject;
  */
 public class TelaPrincipal extends javax.swing.JFrame {
 
-    public static String versao = "0.9001b";
+    public static String versao = "0.9005b";
 
     /**
      * Creates new form TelaPrincipal
@@ -43,7 +45,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
         spinCotaPatch.setVisible(false);
         lblCota.setVisible(false);
         jsonTxtArea.setText("");
-         setTitle("Ferramenta de credenciais do API. Versão:"+versao);
+        setTitle("Ferramenta de credenciais do API. Versão:" + versao);
 
         //listeners do checkers:
         chkGet.addItemListener(new ItemListener() {
@@ -125,13 +127,13 @@ public class TelaPrincipal extends javax.swing.JFrame {
         btnConcederPermissao = new javax.swing.JButton();
         ComboBoxMetodo = new javax.swing.JComboBox<>();
         campoCliente = new javax.swing.JTextField();
-        jLabel1 = new javax.swing.JLabel();
+        lblSistema = new javax.swing.JLabel();
         jLabel2 = new javax.swing.JLabel();
         lblCota = new javax.swing.JLabel();
         jLabel4 = new javax.swing.JLabel();
         txtURLAPI = new javax.swing.JTextField();
         lblQueryAPI = new javax.swing.JLabel();
-        lblClientId = new javax.swing.JLabel();
+        lblClient_key = new javax.swing.JLabel();
         jScrollPane1 = new javax.swing.JScrollPane();
         jsonTxtArea = new javax.swing.JTextArea();
         btnRemoverPermissao = new javax.swing.JButton();
@@ -154,6 +156,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
         btnHelp = new javax.swing.JButton();
         jLabel3 = new javax.swing.JLabel();
         txtAPI = new javax.swing.JLabel();
+        comboBoxServer = new javax.swing.JComboBox<>();
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
@@ -179,7 +182,9 @@ public class TelaPrincipal extends javax.swing.JFrame {
             }
         });
 
-        jLabel1.setText("Sistema");
+        lblSistema.setFont(new java.awt.Font("Segoe UI", 1, 36)); // NOI18N
+        lblSistema.setText("Sistema");
+        lblSistema.setVisible(false);
 
         jLabel2.setText("Método");
 
@@ -200,8 +205,9 @@ public class TelaPrincipal extends javax.swing.JFrame {
         lblQueryAPI.setText("API");
         lblQueryAPI.setVisible(false);
 
-        lblClientId.setText("client_id");
+        lblClient_key.setText("Cliente");
 
+        jsonTxtArea.setEditable(false);
         jsonTxtArea.setColumns(20);
         jsonTxtArea.setRows(5);
         jsonTxtArea.setText("{\n\t\"APIsPermitidas\": {\n    \"POST/api/novafibra/v1/antifraude/fechamentocaso\": {\n      \"quota\": 1\n    },\n    \"POST/trg/api/novafibra/v1/antifraude/fechamentocaso\": {\n      \"quota\": 1\n    }\n  },\n  \"APIsPermitidas_v2\": {\n    \"/api/customermanagement/v3/creditanalysis\": {\n      \"GET\": \n      {\n        \"quota\": 3\n      },\n      \"POST\": \n      {\n        \"quota\": 2\n      }\n    },\n    \"/api/customermanagement/v3/revenueStatus\": {\n      \"ALL\": {\n        \"quota\": 5\n      }\n    },\n    \"/api/customermanagement/v3/xpto\": {\n      \"PATCH\": {\n        \"quota\": 3\n      },\n      \"ALL\": {\n        \"quota\": 4\n      }\n    },\n    \"/api/customermanagement/v3/*\": {\n      \"ALL\": {\n        \"quota\": 7\n      }\n    }\n  }\n}");
@@ -329,28 +335,65 @@ public class TelaPrincipal extends javax.swing.JFrame {
             }
         });
 
-        jLabel3.setText("Preview Json");
+        jLabel3.setText("Json BD");
 
         txtAPI.setFont(new java.awt.Font("Segoe UI", 0, 36)); // NOI18N
         txtAPI.setText("API");
         txtAPI.setVisible(false);
+
+        comboBoxServer.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "apimdev", "apimhml.oi.net.br", "apim.oi.net.br", "apimbss.oi.net.br", "apimhmllocal.intranet", "apimlocal.intranet", "apimbsslocal.intranet", "apimoiplay.oi.net.br", "apimoiplaylocal.intranet" }));
+        switch (getTableBD()) {//configurando tabela
+            case "\"Table_DEV_INT\"":
+            comboBoxServer.setSelectedItem("apimdev");
+            break;
+            case "\"Table_HML_EXT\"":
+            comboBoxServer.setSelectedItem("apimhml.oi.net.br");
+            break;
+            case "\"Table_PRD_EXT\"":
+            comboBoxServer.setSelectedItem("apim.oi.net.br");
+            break;
+            case "\"Table_BSS_EXT\"":
+            comboBoxServer.setSelectedItem("apimbss.oi.net.br");
+            break;
+            case "\"Table_HML_INT\"":
+            comboBoxServer.setSelectedItem("apimhmllocal.intranet");
+            break;
+            case "\"Table_PRD_INT\"":
+            comboBoxServer.setSelectedItem("apimlocal.intranet");
+            break;
+            case "\"Table_BSS_INT\"":
+            comboBoxServer.setSelectedItem("apimbsslocal.intranet");
+            break;
+            case "\"Table_PLAY_INT\"":
+            comboBoxServer.setSelectedItem("apimoiplaylocal.intranet");
+            break;
+            case "\"Table_PLAY_EXT\"":
+            comboBoxServer.setSelectedItem("apimlocaloiplay.oi.net.br");
+            break;
+        }
+
+        comboBoxServer.setVisible(false);
 
         javax.swing.GroupLayout layout = new javax.swing.GroupLayout(getContentPane());
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addGap(42, 42, 42)
+                .addComponent(lblClient_key)
+                .addGap(18, 18, 18)
+                .addComponent(campoCliente, javax.swing.GroupLayout.PREFERRED_SIZE, 183, javax.swing.GroupLayout.PREFERRED_SIZE)
+                .addGap(18, 18, 18)
+                .addComponent(btnBuscarCliente)
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
+            .addGroup(layout.createSequentialGroup()
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
+                        .addGap(97, 97, 97)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addGroup(layout.createSequentialGroup()
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGap(75, 75, 75)
-                                        .addComponent(jLabel1))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGap(491, 491, 491)
-                                        .addComponent(jLabel4)))
+                                .addGap(491, 491, 491)
+                                .addComponent(jLabel4)
                                 .addGap(220, 220, 220))
                             .addGroup(layout.createSequentialGroup()
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -372,27 +415,24 @@ public class TelaPrincipal extends javax.swing.JFrame {
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                                     .addComponent(txtURLAPI, javax.swing.GroupLayout.PREFERRED_SIZE, 452, javax.swing.GroupLayout.PREFERRED_SIZE)
                                     .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 28, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(28, 28, 28)
-                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addComponent(lblClientId)
-                                        .addGap(224, 224, 224)
-                                        .addComponent(btnBuscarCliente))
-                                    .addGroup(layout.createSequentialGroup()
-                                        .addGap(56, 56, 56)
-                                        .addComponent(campoCliente, javax.swing.GroupLayout.PREFERRED_SIZE, 183, javax.swing.GroupLayout.PREFERRED_SIZE))))
-                            .addGroup(layout.createSequentialGroup()
-                                .addGap(298, 298, 298)
-                                .addComponent(lblQueryAPI)))
                         .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addGap(0, 0, Short.MAX_VALUE)
                         .addComponent(txtAPI)
-                        .addGap(59, 59, 59)))
+                        .addGap(59, 59, 59))
+                    .addGroup(layout.createSequentialGroup()
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(97, 97, 97)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(298, 298, 298)
+                                        .addComponent(lblQueryAPI))
+                                    .addComponent(lblSistema)))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(22, 22, 22)
+                                .addComponent(comboBoxServer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)))
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
                         .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 517, javax.swing.GroupLayout.PREFERRED_SIZE)
@@ -407,52 +447,54 @@ public class TelaPrincipal extends javax.swing.JFrame {
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
             .addGroup(layout.createSequentialGroup()
+                .addContainerGap()
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                    .addComponent(btnHelp)
+                    .addComponent(comboBoxServer, javax.swing.GroupLayout.Alignment.TRAILING, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                     .addGroup(layout.createSequentialGroup()
-                        .addGap(21, 21, 21)
-                        .addComponent(jLabel1))
-                    .addGroup(layout.createSequentialGroup()
-                        .addContainerGap()
-                        .addComponent(btnHelp)))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
-                    .addGroup(layout.createSequentialGroup()
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(campoCliente, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(lblClientId)
-                            .addComponent(btnBuscarCliente))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 702, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap())
-                    .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel3)
-                        .addGap(0, 0, Short.MAX_VALUE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(74, 74, 74)
-                        .addComponent(jLabel4)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
-                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                            .addComponent(txtURLAPI, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                            .addComponent(btnConcederPermissao, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
-                        .addComponent(lblQueryAPI)
-                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGap(22, 22, 22)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
                             .addGroup(layout.createSequentialGroup()
-                                .addGap(43, 43, 43)
+                                .addComponent(jLabel3)
+                                .addGap(0, 0, Short.MAX_VALUE))
+                            .addGroup(layout.createSequentialGroup()
+                                .addGap(74, 74, 74)
+                                .addComponent(jLabel4)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
                                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
-                                    .addComponent(jLabel2)
-                                    .addComponent(lblCota))
+                                    .addComponent(txtURLAPI, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                    .addComponent(btnConcederPermissao, javax.swing.GroupLayout.PREFERRED_SIZE, 37, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                                .addComponent(lblQueryAPI)
+                                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                                    .addGroup(layout.createSequentialGroup()
+                                        .addGap(43, 43, 43)
+                                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                                            .addComponent(jLabel2)
+                                            .addComponent(lblCota))
+                                        .addGap(18, 18, 18)
+                                        .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
+                                    .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                                 .addGap(18, 18, 18)
-                                .addComponent(jPanel1, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                            .addComponent(jScrollPane2, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                        .addGap(18, 18, 18)
-                        .addComponent(txtAPI)
-                        .addGap(61, 61, 61)
-                        .addComponent(btnRemoverPermissao, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addGap(18, 18, 18)
-                        .addComponent(ComboBoxMetodo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
-                        .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                                .addComponent(txtAPI)
+                                .addGap(61, 61, 61)
+                                .addComponent(btnRemoverPermissao, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addGap(18, 18, 18)
+                                .addComponent(ComboBoxMetodo, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED)
+                        .addComponent(lblSistema)
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.UNRELATED)
+                        .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
+                            .addComponent(btnBuscarCliente)
+                            .addComponent(campoCliente, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)
+                            .addComponent(lblClient_key))
+                        .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                        .addComponent(jScrollPane1, javax.swing.GroupLayout.PREFERRED_SIZE, 702, javax.swing.GroupLayout.PREFERRED_SIZE)
+                        .addContainerGap())))
         );
 
         pack();
@@ -461,19 +503,54 @@ public class TelaPrincipal extends javax.swing.JFrame {
     public void setarJsonTxtArea(String json) {
         jsonTxtArea.setText(json);
     }
+
+    public String pegarTabela() {
+        String tabela = comboBoxServer.getSelectedItem().toString();
+
+        switch (tabela) {//configurando tabela
+            case "apimdev":
+                ConexaoBD.setTableBD("Table_DEV_INT");
+                break;
+            case "apimhml.oi.net.br":
+                ConexaoBD.setTableBD("Table_HML_EXT");
+                break;
+            case "apim.oi.net.br":
+                ConexaoBD.setTableBD("\"Table_PRD_EXT\"");
+                break;
+            case "apimbss.oi.net.br":
+                ConexaoBD.setTableBD("\"Table_BSS_EXT\"");
+                break;
+            case "apimhmllocal.intranet":
+                ConexaoBD.setTableBD("\"Table_HML_INT\"");
+                break;
+            case "apimlocal.intranet":
+                ConexaoBD.setTableBD("\"Table_PRD_INT\"");
+                break;
+            case "apimbsslocal.intranet":
+                ConexaoBD.setTableBD("\"Table_BSS_INT\"");
+                break;
+            case "apimoiplaylocal.intranet":
+                ConexaoBD.setTableBD("\"Table_PLAY_INT\"");
+                break;
+            case "apimlocaloiplay.oi.net.br":
+                ConexaoBD.setTableBD("\"Table_PLAY_EXT\"");
+                break;
+        }
+
+        return getTableBD();
+    }
     private void btnConcederPermissaoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConcederPermissaoActionPerformed
-        
-        //TODO senão existir client_id e nem sistema, não fazer a inclusão e criar nova tela para criação de cliente
-        if (!getClient_id().equals(campoCliente.getText())) {//força o insertSistema esteja alimentado, caso o usuário não tenha clicado em buscar.
-            setClient_id(campoCliente.getText());
+
+        //TODO senão existir client_key e nem sistema, não fazer a inclusão e criar nova tela para criação de cliente
+        if (!getInsertClient_key().equals(campoCliente.getText())) {//força o insertSistema esteja alimentado, caso o usuário não tenha clicado em buscar.
+            setInsertClient_key(campoCliente.getText());
             ConexaoBD conexaobd = new ConexaoBD();
             try {
-                conexaobd.buscarClient_Id(getClient_id());//após rodar, também alimentará setInsertSistema()
+                conexaobd.buscarClient_key(getInsertClient_key(), pegarTabela());//após rodar, também alimentará setInsertSistema()
             } catch (ClassNotFoundException ex) {
                 Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
             }
         }
-
 
         setInsertURL(txtURLAPI.getText());
         ConexaoBD conexaobd = new ConexaoBD();
@@ -524,17 +601,13 @@ public class TelaPrincipal extends javax.swing.JFrame {
 
                 try {//conseguindo API TODO melhorar para não ter que buscar o nome do API no banco, e sim, num array quando apertar o buscarCliente
                     setInsertAPI(conexaobd.buscarAPI(getInsertURL()));
-                } catch (ClassNotFoundException ex) {
-                    Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (SQLException ex) {
+                } catch (ClassNotFoundException | SQLException ex) {
                     Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
                 try {
-                    conexaobd.inativador(getInsertURL(), getClient_id());//método chama query para desativar tudo que tem no banco com esse URL e client_id antes de colocar os métodos novos. 
-                } catch (ClassNotFoundException ex) {
-                    Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                } catch (SQLException ex) {
+                    conexaobd.inativador(getInsertURL(), getInsertClient_key());//método chama query para desativar tudo que tem no banco com esse URL e client_key antes de colocar os métodos novos. 
+                } catch (ClassNotFoundException | SQLException ex) {
                     Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
@@ -550,17 +623,13 @@ public class TelaPrincipal extends javax.swing.JFrame {
 
             try {//conseguindo API TODO melhorar para não ter que buscar o nome do API no banco, e sim, num array quando apertar o buscarCliente
                 setInsertAPI(conexaobd.buscarAPI(getInsertURL()));
-            } catch (ClassNotFoundException ex) {
-                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (SQLException ex) {
+            } catch (ClassNotFoundException | SQLException ex) {
                 Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
             }
 
             try {
-                conexaobd.inativador(getInsertURL(), getClient_id());//método chama query para desativar tudo que tem no banco com esse URL e client_id antes de colocar os métodos novos. 
-            } catch (ClassNotFoundException ex) {
-                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-            } catch (SQLException ex) {
+                conexaobd.inativador(getInsertURL(), getInsertClient_key());//método chama query para desativar tudo que tem no banco com esse URL e client_key antes de colocar os métodos novos. 
+            } catch (ClassNotFoundException | SQLException ex) {
                 Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
             }
 
@@ -593,7 +662,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
 
                     //INSERT NO BANCO
                     try {
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg());
                     } catch (ClassNotFoundException ex) {
                         Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
                     } catch (SQLException ex) {
@@ -611,7 +680,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
 
                     //INSERT NO BANCO
                     try {
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg());
                     } catch (ClassNotFoundException ex) {
                         Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
                     } catch (SQLException ex) {
@@ -629,7 +698,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
 
                     //INSERT NO BANCO
                     try {
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg());
                     } catch (ClassNotFoundException ex) {
                         Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
                     } catch (SQLException ex) {
@@ -647,7 +716,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
 
                     //INSERT NO BANCO
                     try {
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg());
                     } catch (ClassNotFoundException ex) {
                         Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
                     } catch (SQLException ex) {
@@ -665,7 +734,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
 
                     //INSERT NO BANCO
                     try {
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg());
                     } catch (ClassNotFoundException ex) {
                         Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
                     } catch (SQLException ex) {
@@ -683,7 +752,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
 
                     //INSERT NO BANCO
                     try {
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg());
                     } catch (ClassNotFoundException ex) {
                         Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
                     } catch (SQLException ex) {
@@ -718,7 +787,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
 
                     //INSERT NO BANCO
                     try {
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg());
                     } catch (ClassNotFoundException ex) {
                         Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
                     } catch (SQLException ex) {
@@ -734,7 +803,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
 
                     //INSERT NO BANCO
                     try {
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg());
                     } catch (ClassNotFoundException ex) {
                         Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
                     } catch (SQLException ex) {
@@ -750,7 +819,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
 
                     //INSERT NO BANCO
                     try {
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg());
                     } catch (ClassNotFoundException ex) {
                         Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
                     } catch (SQLException ex) {
@@ -766,7 +835,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
 
                     //INSERT NO BANCO
                     try {
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg());
                     } catch (ClassNotFoundException ex) {
                         Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
                     } catch (SQLException ex) {
@@ -782,7 +851,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
 
                     //INSERT NO BANCO
                     try {
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg());
                     } catch (ClassNotFoundException ex) {
                         Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
                     } catch (SQLException ex) {
@@ -798,7 +867,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
 
                     //INSERT NO BANCO
                     try {
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getClient_id(), getInsertUser(), getINSERCAO());
+                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg());
                     } catch (ClassNotFoundException ex) {
                         Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
                     } catch (SQLException ex) {
@@ -865,6 +934,13 @@ public class TelaPrincipal extends javax.swing.JFrame {
             apiPermitidasObj.put("APIsPermitidas_v2", urlAPIObj);
 
         }
+
+        try {//apagar Cadastro
+            apiPermitidasObj.getJSONObject("APIsPermitidas_v2").remove("Cadastro");
+        } catch (JSONException je) {
+            System.out.println("Catch apagar Cadastro");
+        }
+
         String json = apiPermitidasObj.toString();
 
         json = JsonWriter.formatJson(json); //indentando   
@@ -875,15 +951,27 @@ public class TelaPrincipal extends javax.swing.JFrame {
         return json;
     }
     private void btnBuscarClienteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarClienteActionPerformed
+        lblSistema.setVisible(false);
+        setInsertSistema("");
+        jsonTxtArea.setText("");
+        alimentaJtable("{\"APIsPermitidas_v2\":{}}");
         txtURLAPI.setText("");
         txtAPI.setVisible(false);
-        setClient_id(campoCliente.getText());//TODO fazer buscar inteligente, pelo sistema também
+        setInsertClient_key(campoCliente.getText());//TODO fazer buscar inteligente, pelo sistema também
         ConexaoBD conexaobd = new ConexaoBD();
         try {
-            conexaobd.buscarClient_Id(getClient_id());//após rodar, também alimentará setInsertSistema()
+            conexaobd.buscarClient_key(getInsertClient_key(), pegarTabela());//após rodar, também alimentará setInsertSistema()
         } catch (ClassNotFoundException ex) {
             Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
         }
+
+        try {//TODO colocar numa thread
+            CRUDOTK.getOTK(getInsertClient_key());
+        } catch (Exception ex) {
+            Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        lblSistema.setText(getInsertSistema());
+        lblSistema.setVisible(true);
     }//GEN-LAST:event_btnBuscarClienteActionPerformed
 
     private void btnHelpActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnHelpActionPerformed
@@ -954,7 +1042,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
                                 JSONObject metodo = new JSONObject(matrix[i][j]);
                                 String keyMetodo = metodo.keys().next();
                                 int quota = (int) metodo.getJSONObject(keyMetodo).getInt("quota");
-                                switch (keyMetodo) {//TODO implementar a mesma coisa quando digitar algo no URL e client_id, vir tudo. para o caso do cliente não ter nenhum método a ser clicado na jtable
+                                switch (keyMetodo) {//TODO implementar a mesma coisa quando digitar algo no URL e client_key, vir tudo. para o caso do cliente não ter nenhum método a ser clicado na jtable
                                     case "GET":
                                         chkGet.setSelected(true);
                                         spinCotaGet.setValue(quota);
@@ -1007,7 +1095,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
         String[][] matriz = new String[jsonTypedObj.length()][7]; //tabela de URLs por métodos (suporta 5 métodos)
         while (keys.hasNext()) {
             String key = keys.next();
-            if (jsonTypedObj.get(key) instanceof JSONObject) {
+            if (jsonTypedObj.get(key) instanceof JSONObject) {//saber se o URL da iteração é um JSONObject
                 matriz[matrizUrl][matrizMetodo] = key;
                 JSONObject jsonTypedObjMetodo = new JSONObject(typedJson);
                 jsonTypedObjMetodo = jsonTypedObj.getJSONObject(key);
@@ -1018,7 +1106,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
                     if (jsonTypedObjMetodo.get(keyMetodo) instanceof JSONObject) {
                         String json = "    {\"" + keyMetodo + "\": " + jsonTypedObjMetodo.get(keyMetodo).toString() + "}         ";
 
-                        json = JsonWriter.formatJson(json); //indentando   
+                       // json = JsonWriter.formatJson(json); //indentando   
                         matrizMetodo++;
                         matriz[matrizUrl][matrizMetodo] = json;
                     }
@@ -1034,13 +1122,13 @@ public class TelaPrincipal extends javax.swing.JFrame {
     /**
      * @param args the command line arguments
      */
-    public static void main(String args[]) {
+    public static void main(String args[]) throws UnsupportedLookAndFeelException {
         /* Set the Nimbus look and feel */
         //<editor-fold defaultstate="collapsed" desc=" Look and feel setting code (optional) ">
         /* If Nimbus (introduced in Java SE 6) is not available, stay with the default look and feel.
          * For details see http://download.oracle.com/javase/tutorial/uiswing/lookandfeel/plaf.html 
          */
-        
+
         try {
             for (javax.swing.UIManager.LookAndFeelInfo info : javax.swing.UIManager.getInstalledLookAndFeels()) {
                 if ("Nimbus".equals(info.getName())) {
@@ -1048,15 +1136,11 @@ public class TelaPrincipal extends javax.swing.JFrame {
                     break;
                 }
             }
-        } catch (ClassNotFoundException ex) {
-            java.util.logging.Logger.getLogger(TelaPrincipal.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (InstantiationException ex) {
-            java.util.logging.Logger.getLogger(TelaPrincipal.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(TelaPrincipal.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
-        } catch (javax.swing.UnsupportedLookAndFeelException ex) {
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
             java.util.logging.Logger.getLogger(TelaPrincipal.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
+        //</editor-fold>
+
         //</editor-fold>
 
         /* Create and display the form */
@@ -1066,8 +1150,9 @@ public class TelaPrincipal extends javax.swing.JFrame {
             }
         });
     }
-    public void main (){
-         new TelaPrincipal().setVisible(true);
+
+    public void main() {
+        new TelaPrincipal().setVisible(true);
     }
 
     // Variables declaration - do not modify//GEN-BEGIN:variables
@@ -1083,7 +1168,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
     private javax.swing.JCheckBox chkPatch;
     private javax.swing.JCheckBox chkPost;
     private javax.swing.JCheckBox chkPut;
-    private javax.swing.JLabel jLabel1;
+    private javax.swing.JComboBox<String> comboBoxServer;
     private javax.swing.JLabel jLabel2;
     private javax.swing.JLabel jLabel3;
     private javax.swing.JLabel jLabel4;
@@ -1091,9 +1176,10 @@ public class TelaPrincipal extends javax.swing.JFrame {
     private javax.swing.JScrollPane jScrollPane1;
     private javax.swing.JScrollPane jScrollPane2;
     public static javax.swing.JTextArea jsonTxtArea;
-    private javax.swing.JLabel lblClientId;
+    private javax.swing.JLabel lblClient_key;
     private javax.swing.JLabel lblCota;
     private javax.swing.JLabel lblQueryAPI;
+    private javax.swing.JLabel lblSistema;
     private javax.swing.JSpinner spinCotaAll;
     private javax.swing.JSpinner spinCotaDelete;
     private javax.swing.JSpinner spinCotaGet;
