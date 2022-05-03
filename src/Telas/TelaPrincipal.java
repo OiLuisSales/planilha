@@ -541,7 +541,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
         return getTableBD();
     }
     private void btnConcederPermissaoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConcederPermissaoActionPerformed
-
+        //adicionar inteligência para verficar getInsertInsercao() antes de conceder.
         //TODO senão existir client_key e nem sistema, não fazer a inclusão e criar nova tela para criação de cliente
         if (!getInsertClient_key().equals(campoCliente.getText())) {//força o insertSistema esteja alimentado, caso o usuário não tenha clicado em buscar.
             setInsertClient_key(campoCliente.getText());
@@ -774,6 +774,13 @@ public class TelaPrincipal extends javax.swing.JFrame {
                     //já tratado
                 } else {
                     gerarJson(matrix);
+                     System.out.println("PUT no otk de overwrite:");
+                    try {
+                        CRUDOTK.putOTK(getInsertClient_key(), getInsertSistema(), getInsertOrg(), getInsertDescription(), getInsertType(), jsonTxtArea.getText(), getInsertUser(), getServer());
+                    } catch (Exception ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    System.out.println(jsonTxtArea.getText());
                 }
 
             } else {//não possui dentro do vetor, acrescentar novo URL    //TODO insert no banco
