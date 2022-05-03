@@ -327,7 +327,7 @@ public class ConexaoBD {
         }
 
     }
-
+//TODO implementar mudança de tabela ao mudar de ambiente.
     public void insertBD(String API, String URL, String METODO, int QUOTA, String SISTEMA, String CLIENT_KEY, String USER, int INSERCAO, String TYPE, String DESCRIPTION, String ORG) throws ClassNotFoundException, SQLException {//TODO insert update ATIVO para 0.
         Class.forName(ClassForName);
         Connection con = DriverManager.getConnection(UrlBD, userBD, PassBD);

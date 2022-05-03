@@ -31,7 +31,7 @@ public class DumpCA {
 
     public static void dumpCAOTK() throws ClassNotFoundException, SQLException, IOException {
 
-        jsonOTK = new String(Files.readAllBytes(Paths.get("src/DumpArquivos/otk.json")));
+        jsonOTK = new String(Files.readAllBytes(Paths.get("src/DumpArquivos/------otk.json")));
 
         JSONObject obj = new JSONObject(jsonOTK);
         obj = obj.getJSONObject("values");

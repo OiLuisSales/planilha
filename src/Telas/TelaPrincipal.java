@@ -5,6 +5,7 @@
 package Telas;
 
 import Apontamento.CRUDOTK;
+import static Apontamento.GetCaPermissao.getServer;
 import Codigo.ConexaoBD;
 import static Codigo.ConexaoBD.*;
 import com.cedarsoftware.util.io.JsonWriter;
@@ -593,6 +594,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
                 json = JsonWriter.formatJson(json); //indentando   
                 jsonTxtArea.setText(json);
                 alimentaJtable(json);
+                
                 try {
                     conexaobd.maxInsercao();
                 } catch (ClassNotFoundException ex) {
@@ -611,6 +613,13 @@ public class TelaPrincipal extends javax.swing.JFrame {
                     Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
                 }
 
+                System.out.println("PUT no otk, de apagar URL:");
+                try {
+                    CRUDOTK.putOTK(getInsertClient_key(), getInsertSistema(), getInsertOrg(), getInsertDescription(), getInsertType(), jsonTxtArea.getText(), getInsertUser(), getServer());
+                } catch (Exception ex) {
+                    Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                System.out.println(jsonTxtArea.getText());
                 JOptionPane.showMessageDialog(rootPane, "URL " + urlAPI + " deletado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
             }
         } else {
@@ -765,7 +774,6 @@ public class TelaPrincipal extends javax.swing.JFrame {
                     //já tratado
                 } else {
                     gerarJson(matrix);
-
                 }
 
             } else {//não possui dentro do vetor, acrescentar novo URL    //TODO insert no banco
@@ -879,8 +887,16 @@ public class TelaPrincipal extends javax.swing.JFrame {
                     JOptionPane.showMessageDialog(rootPane, "Favor escolher ao menos um método", "Erro", JOptionPane.ERROR_MESSAGE);
                 } else {
                     gerarJson(newMatrix);
+                    System.out.println("PUT no otk:");
+                    try {
+                        CRUDOTK.putOTK(getInsertClient_key(), getInsertSistema(), getInsertOrg(), getInsertDescription(), getInsertType(), jsonTxtArea.getText(), getInsertUser(), getServer());
+                    } catch (Exception ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                    System.out.println(jsonTxtArea.getText());
                 }
             }
+
         }
     }//GEN-LAST:event_btnConcederPermissaoActionPerformed
 
@@ -1106,7 +1122,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
                     if (jsonTypedObjMetodo.get(keyMetodo) instanceof JSONObject) {
                         String json = "    {\"" + keyMetodo + "\": " + jsonTypedObjMetodo.get(keyMetodo).toString() + "}         ";
 
-                       // json = JsonWriter.formatJson(json); //indentando   
+                        // json = JsonWriter.formatJson(json); //indentando   
                         matrizMetodo++;
                         matriz[matrizUrl][matrizMetodo] = json;
                     }

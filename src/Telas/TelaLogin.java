@@ -4,6 +4,7 @@
  */
 package Telas;
 
+import Apontamento.CRUDOTK;
 import Apontamento.GetCaPermissao;
 import Codigo.ConexaoBD;
 import static Telas.TelaPrincipal.versao;
@@ -94,6 +95,7 @@ public class TelaLogin extends javax.swing.JFrame {
                         .addGap(18, 18, 18)
                         .addComponent(listServer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                     .addGroup(layout.createSequentialGroup()
+                        .addGap(25, 25, 25)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jLabel2)
                             .addComponent(jLabel1))
