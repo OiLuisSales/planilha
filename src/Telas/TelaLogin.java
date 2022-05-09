@@ -75,6 +75,7 @@ public class TelaLogin extends javax.swing.JFrame {
         jLabel3.setText("Ambiente");
 
         listServer.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "apimdev", "apimhml.oi.net.br", "apim.oi.net.br", "apimbss.oi.net.br", "apimhmllocal.intranet", "apimlocal.intranet", "apimbsslocal.intranet", "apimoiplay.oi.net.br", "apimoiplaylocal.intranet" }));
+        listServer.setSelectedItem("apimhml.oi.net.br");
 
         btnDumpOTKtoSQL.setText("DumpOTKtoSQL");
         btnDumpOTKtoSQL.addActionListener(new java.awt.event.ActionListener() {
@@ -140,59 +141,62 @@ public class TelaLogin extends javax.swing.JFrame {
         login = campoLogin.getText();
         setInsertUser(login);
         password = new String(campoPassword.getPassword());
-        String server = listServer.getSelectedItem().toString().toLowerCase();
-        server = "https://"+server;
-
-        switch (server) {//configurando tabela
-            case "apimdev":
-                ConexaoBD.setTableBD("\"Table_DEV_INT\"");
-                break;
-                case "apimhml.oi.net.br":
-                ConexaoBD.setTableBD("\"Table_HML_EXT\"");
-                break;
-                case "apim.oi.net.br":
-                ConexaoBD.setTableBD("\"Table_PRD_EXT\"");
-                break;
-                case "apimbss.oi.net.br":
-                ConexaoBD.setTableBD("\"Table_BSS_EXT\"");
-                break;
-                case "apimhmllocal.intranet":
-                ConexaoBD.setTableBD("\"Table_HML_INT\"");
-                break;
-                case "apimlocal.intranet":
-                ConexaoBD.setTableBD("\"Table_PRD_INT\"");
-                break;
-                case "apimbsslocal.intranet":
-                ConexaoBD.setTableBD("\"Table_BSS_INT\"");
-                break;
-                case "apimoiplaylocal.intranet":
-                ConexaoBD.setTableBD("\"Table_PLAY_INT\"");
-                break;
-                case "apimlocaloiplay.oi.net.br":
-                ConexaoBD.setTableBD("\"Table_PLAY_EXT\"");
-                break;
-        }
-
+        String server = pegarAmbiente();
+        server = "https://" + server;
         GetCaPermissao gt = new GetCaPermissao();
         gt.setServer(server);
-        
+
         try {
             gt.VerificarCredenciais(login, password);
         } catch (Exception ex) {
             Logger.getLogger(TelaLogin.class.getName()).log(Level.SEVERE, null, ex);
         }
-        
+
         if (responseCode == 200) {
             new TelaPrincipal().main();
             this.setVisible(false);
-
         } else {
             System.out.println("dados errados ou servidores indisponíveis");
         }
     }//GEN-LAST:event_btnLoginActionPerformed
 
+    private String pegarAmbiente(){
+        String server = listServer.getSelectedItem().toString().toLowerCase();
+
+        switch (server) {//configurando tabela
+            case "apimdev":
+                ConexaoBD.setTableBD("Table_DEV_INT");
+                break;
+            case "apimhml.oi.net.br":
+                ConexaoBD.setTableBD("Table_HML_EXT");
+                break;
+            case "apim.oi.net.br":
+                ConexaoBD.setTableBD("Table_PRD_EXT");
+                break;
+            case "apimbss.oi.net.br":
+                ConexaoBD.setTableBD("Table_BSS_EXT");
+                break;
+            case "apimhmllocal.intranet":
+                ConexaoBD.setTableBD("Table_HML_INT");
+                break;
+            case "apimlocal.intranet":
+                ConexaoBD.setTableBD("Table_PRD_INT");
+                break;
+            case "apimbsslocal.intranet":
+                ConexaoBD.setTableBD("Table_BSS_INT");
+                break;
+            case "apimoiplaylocal.intranet":
+                ConexaoBD.setTableBD("Table_PLAY_INT");
+                break;
+            case "apimlocaloiplay.oi.net.br":
+                ConexaoBD.setTableBD("Table_PLAY_EXT");
+                break;
+        }
+        return server;
+    }
     private void btnDumpOTKtoSQLActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDumpOTKtoSQLActionPerformed
         try {
+            pegarAmbiente();
             DumpCA.dumpCAOTK();
         } catch (ClassNotFoundException | SQLException | IOException ex) {
             Logger.getLogger(TelaLogin.class.getName()).log(Level.SEVERE, null, ex);

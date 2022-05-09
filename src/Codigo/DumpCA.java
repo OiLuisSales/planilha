@@ -4,6 +4,7 @@
  */
 package Codigo;
 
+import static Codigo.ConexaoBD.getTableBD;
 import com.cedarsoftware.util.io.JsonWriter;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -31,7 +32,7 @@ public class DumpCA {
 
     public static void dumpCAOTK() throws ClassNotFoundException, SQLException, IOException {
 
-        jsonOTK = new String(Files.readAllBytes(Paths.get("src/DumpArquivos/------otk.json")));
+        jsonOTK = new String(Files.readAllBytes(Paths.get("src/DumpArquivos/otk.json")));
 
         JSONObject obj = new JSONObject(jsonOTK);
         obj = obj.getJSONObject("values");
@@ -61,7 +62,7 @@ public class DumpCA {
                 semAPI = true;
             }
             if (semAPI) {
-                conexaobd.insertBD("no_name", "Cadastro", "Cadastro", 0, name, client_ident, "dev", 1, type, description, organization);
+                conexaobd.insertBD("no_name", "Cadastro", "Cadastro", 0, name, client_ident, "dev", 1, type, description, organization, getTableBD());
                 continue;
             } else {
                 Iterator<String> keys = apisPermitidas.keys();
@@ -69,13 +70,12 @@ public class DumpCA {
                 while (keys.hasNext()) {
                     String URL = keys.next(); //URL da iteração
                     System.out.println("URLDaVez:" + URL);
-String metodo = null;
-                    if (URL.length()<3){
+                    String metodo = null;
+                    if (URL.length() < 3) {
                         metodo = "ALL";
-                    }else{
-                       metodo = URL.substring(0, 3); 
+                    } else {
+                        metodo = URL.substring(0, 3);
                     }
-                    
 
                     int cota = apisPermitidas.getJSONObject(URL).getInt("quota");
                     System.out.println("cota:" + cota);
@@ -110,7 +110,7 @@ String metodo = null;
                             break;
                     }
 
-                    conexaobd.insertBD("no_name", URL, metodo, cota, name, client_ident, "dev", 1, type, description, organization);
+                    conexaobd.insertBD("no_name", URL, metodo, cota, name, client_ident, "dev", 1, type, description, organization, getTableBD());
                 }
 
             }

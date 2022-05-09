@@ -45,7 +45,6 @@ public class CRUDOTK {
             JOptionPane.showMessageDialog(null, e.getMessage(), "Erro! Exceção na chamada do Post", JOptionPane.ERROR_MESSAGE);
         }
     }*/
-    
     public static void putOTK(String client_key, String sistema, String org, String description, String type, String client_custom, String usuario, String server) throws IOException, InterruptedException {
 
         client_key = "?client_ident=" + client_key;//mudando custom key, não a credencial. Para mudar credencial implementar query param ?client_key=
@@ -56,6 +55,7 @@ public class CRUDOTK {
                 .uri(URI.create(URL))
                 .PUT(HttpRequest.BodyPublishers.ofString(client_custom))
                 .header("token", getToken())
+                .header("ambiente", server)
                 .header("Content-Type", "application/json")
                 .build();
 
@@ -64,7 +64,6 @@ public class CRUDOTK {
         System.out.println(response.body());
     }
 
-    
     public static void getOTK(String client_key) throws Exception {
         //desativando a validacao de certificado.
         SSLTool ssltool = new SSLTool();
@@ -77,6 +76,7 @@ public class CRUDOTK {
         StringBuffer response = null;
         try {
             con.setRequestProperty("token", getToken());
+            con.setRequestProperty("ambiente", getServer());
             con.setRequestMethod("GET");
             //con.setRequestProperty("User-Agent", "Mozilla/5.0");
             int respCode = con.getResponseCode();
@@ -108,5 +108,49 @@ public class CRUDOTK {
         String responseSTR = JsonWriter.formatJson(response.toString()); //indentando   
         System.out.println(responseSTR);
         System.out.println("----------====================-----------------------");
+    }
+
+    public static String getAPI(String UrlApi) throws Exception {
+        //desativando a validacao de certificado.
+        SSLTool ssltool = new SSLTool();
+        ssltool.disableCertificateValidation();
+        URL obj = new URL(getServer() + getUrlOTK());
+        HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
+
+        BufferedReader inB = null;
+        StringBuffer response = null;
+        try {
+            con.setRequestProperty("token", getToken());
+            con.setRequestProperty("ambiente", getServer());
+            con.setRequestProperty("url", UrlApi);
+            con.setRequestMethod("GET");
+            //con.setRequestProperty("User-Agent", "Mozilla/5.0");
+            int respCode = con.getResponseCode();
+            setResponseCode(respCode);
+
+            System.out.println("\nEnviando 'GET' request para o URL: " + getServer() + getUrlOTK());
+            System.out.println("Response Code : " + responseCode);//esperado 2xx
+
+            inB = new BufferedReader(new InputStreamReader(con.getInputStream()));
+
+            String inputLine;
+            response = new StringBuffer();
+            while ((inputLine = inB.readLine()) != null) {
+                response.append(inputLine);
+            }
+            System.out.println("result inputLine:");//Printando a string crua.
+            System.out.println(inputLine);
+            System.out.println("----------====================-----------------------");
+        } catch (IOException ex) {
+            System.out.println("Deu ruim no método getAPI");
+        } finally {
+            if (inB != null) {
+                inB.close();
+            }
+        }
+        System.out.println("result response:");//Printando a string crua.
+        System.out.println(response.toString());
+        System.out.println("----------====================-----------------------");
+        return response.toString();
     }
 }

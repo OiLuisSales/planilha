@@ -162,18 +162,16 @@ public class ConexaoBD {
 
             Class.forName(ClassForName);//verificar
             Connection con = DriverManager.getConnection(UrlBD, userBD, PassBD);
-            PreparedStatement pst1 = con.prepareStatement("SELECT * FROM \"Table_HML_EXT\" WHERE LOWER(\"CLIENT_KEY\") = LOWER(?) AND \"ATIVO\" = '1'");
+            PreparedStatement pst1 = con.prepareStatement("SELECT * FROM \"" + tabela + "\" WHERE LOWER(\"SISTEMA\") =LOWER(?) AND \"ATIVO\" = '1'");
 
-           // pst1.setString(1, tabela);
             pst1.setString(1, getInsertClient_key());
 
             rs1 = pst1.executeQuery();
 
             if (!rs1.next()) {
-                System.out.println("Sem resultados para busca do client_key " + getInsertClient_key());
-                JOptionPane.showMessageDialog(null, "client_key " + getInsertClient_key() + " Não encontrado, bucando pelo nome do sistema", "Não encontrado", JOptionPane.INFORMATION_MESSAGE);
-                PreparedStatement pst2 = con.prepareStatement("SELECT	* FROM \"Table_HML_EXT\" WHERE LOWER(\"SISTEMA\") =LOWER(?) AND \"ATIVO\" = '1'");
-
+                System.out.println("Sem resultados para busca do Sistema " + getInsertClient_key());
+                JOptionPane.showMessageDialog(null, "Sistema " + getInsertClient_key() + " Não encontrado, bucando pelo nome do client_id", "Não encontrado", JOptionPane.INFORMATION_MESSAGE);
+                PreparedStatement pst2 = con.prepareStatement("SELECT * FROM \"" + tabela + "\" WHERE LOWER(\"CLIENT_KEY\") = LOWER(?) AND \"ATIVO\" = '1'");
                 //pst2.setString(1, tabela);
                 pst2.setString(1, getInsertClient_key());
 
@@ -207,7 +205,6 @@ public class ConexaoBD {
 
                     System.out.println("API:" + rsAPI + " ||| URL:" + rsURL + " ||| Metodo:" + rsMetodo + " ||| Quota:" + rsQuota);
 
-                    //TelaPrincipal telaprincipal = new TelaPrincipal();
                     String[][] matrix = TelaPrincipal.parseJsonToMatrix(json);//TODO não escala bem. Implementar melhoria
 
                     int posUrl = -1;
@@ -328,10 +325,11 @@ public class ConexaoBD {
 
     }
 //TODO implementar mudança de tabela ao mudar de ambiente.
-    public void insertBD(String API, String URL, String METODO, int QUOTA, String SISTEMA, String CLIENT_KEY, String USER, int INSERCAO, String TYPE, String DESCRIPTION, String ORG) throws ClassNotFoundException, SQLException {//TODO insert update ATIVO para 0.
+
+    public void insertBD(String API, String URL, String METODO, int QUOTA, String SISTEMA, String CLIENT_KEY, String USER, int INSERCAO, String TYPE, String DESCRIPTION, String ORG, String tabela) throws ClassNotFoundException, SQLException {//TODO insert update ATIVO para 0.
         Class.forName(ClassForName);
         Connection con = DriverManager.getConnection(UrlBD, userBD, PassBD);
-        String insert = "INSERT INTO \"public\".\"Table_HML_EXT\" (\"API\", \"URL\", \"METODO\", \"QUOTA\", \"SISTEMA\", \"CLIENT_KEY\", \"USER\", \"INSERCAO\", \"ATIVO\", \"TYPE\", \"DESCRIPTION\", \"ORG\") VALUES (?,?,?,?,?,?,?,?,?,?,?,?) RETURNING *";
+        String insert = "INSERT INTO \"public\".\"" + tabela + "\" (\"API\", \"URL\", \"METODO\", \"QUOTA\", \"SISTEMA\", \"CLIENT_KEY\", \"USER\", \"INSERCAO\", \"ATIVO\", \"TYPE\", \"DESCRIPTION\", \"ORG\") VALUES (?,?,?,?,?,?,?,?,?,?,?,?) RETURNING *";
         PreparedStatement pst1 = con.prepareStatement(insert, PreparedStatement.RETURN_GENERATED_KEYS);
 
         pst1.setString(1, API); //API
@@ -372,11 +370,11 @@ public class ConexaoBD {
 
     }
 
-    public String buscarAPI(String URL) throws ClassNotFoundException, SQLException {//responsável por verificar se já existe o nome da URL da API exemplo ConsultarTopOfertas. 
+    public String buscarAPI(String URL, String tabela) throws ClassNotFoundException, SQLException {//responsável por verificar se já existe o nome da URL da API exemplo ConsultarTopOfertas. 
         try {
             Class.forName(ClassForName);
             Connection con = DriverManager.getConnection(UrlBD, userBD, PassBD);
-            PreparedStatement pst1 = con.prepareStatement("SELECT \"Table_HML_EXT\".\"API\" from \"Table_HML_EXT\" WHERE LOWER(\"URL\")=LOWER(?)");
+            PreparedStatement pst1 = con.prepareStatement("SELECT \"" + tabela + "\".\"API\" from \"" + tabela + "\" WHERE LOWER(\"URL\")=LOWER(?)");
 
             pst1.setString(1, URL);
 
@@ -398,12 +396,37 @@ public class ConexaoBD {
 
     }
 
-    public int maxInsercao() throws ClassNotFoundException {//Responsável pela coluna INSERCAO
+    public ArrayList<String> retornarSistemas(String URL, String tabela) throws ClassNotFoundException, SQLException {//responsável por verificar se já existe o nome da URL da API exemplo ConsultarTopOfertas. 
+        ArrayList<String> sistemas = new ArrayList<String>();
+        try {
+            Class.forName(ClassForName);
+            Connection con = DriverManager.getConnection(UrlBD, userBD, PassBD);
+            PreparedStatement pst1 = con.prepareStatement("SELECT DISTINCT \"SISTEMA\" from \"" + tabela + "\" WHERE LOWER(\"URL\") = LOWER(?)");
+
+            pst1.setString(1, URL);
+
+            ResultSet rs1 = pst1.executeQuery();
+
+            while (rs1.next()) {
+                sistemas.add(rs1.getObject(1).toString());
+            }
+            rs1.close();
+            pst1.close();
+            con.close();
+
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+        return sistemas;
+
+    }
+
+    public int maxInsercao(String tabela) throws ClassNotFoundException {//Responsável pela coluna INSERCAO
 
         try {
             Class.forName(ClassForName);//verificar
             Connection con = DriverManager.getConnection(UrlBD, userBD, PassBD);
-            PreparedStatement pst1 = con.prepareStatement("Select Max(\"INSERCAO\") from \"Table_HML_EXT\"");
+            PreparedStatement pst1 = con.prepareStatement("Select Max(\"INSERCAO\") from \"" + tabela + "\"");
 
             ResultSet rs1 = pst1.executeQuery();
 
@@ -425,12 +448,12 @@ public class ConexaoBD {
         return getINSERCAO();
     }
 
-    public String getAPI(String url) throws ClassNotFoundException {//Captura API a partir do URL
+    public String getAPI(String url, String tabela) throws ClassNotFoundException {//Captura API a partir do URL
 
         try {
             Class.forName(ClassForName);//verificar
             Connection con = DriverManager.getConnection(UrlBD, userBD, PassBD);
-            PreparedStatement pst1 = con.prepareStatement("select * from \"public\".\"Table_HML_EXT\" where \"lower\"(\"URL\") = lower(?) ORDER BY \"DATE\" desc");//pega o registro mais recente deste URL
+            PreparedStatement pst1 = con.prepareStatement("select * from \"public\".\"" + tabela + "\" where \"lower\"(\"URL\") = lower(?) ORDER BY \"DATE\" desc");//pega o registro mais recente deste URL
 
             pst1.setString(1, url);
 
@@ -451,14 +474,14 @@ public class ConexaoBD {
         return getInsertAPI();
     }
 
-    public void inativador(String URL, String CLIENT_KEY) throws ClassNotFoundException, SQLException {//query para desativar tudo que tem no banco com esse URL e client_key antes de colocar os métodos novos. 
+    public void inativador(String URL, String CLIENT_KEY, String tabela) throws ClassNotFoundException, SQLException {//query para desativar tudo que tem no banco com esse URL e client_key antes de colocar os métodos novos. 
         Class.forName(ClassForName);
         Connection con = DriverManager.getConnection(UrlBD, userBD, PassBD);
-        String update = "UPDATE \"public\".\"Table_HML_EXT\" SET \"ATIVO\" = '0' WHERE LOWER(\"URL\") = LOWER(?) AND LOWER(\"CLIENT_KEY\") = LOWER(?)";
+        String update = "UPDATE \"public\".\"" + tabela + "\" SET \"ATIVO\" = '0' WHERE LOWER(\"URL\") = LOWER(?) AND LOWER(\"CLIENT_KEY\") = LOWER(?)";
         PreparedStatement pst1 = con.prepareStatement(update);
 
         if (isInsertApagar()) {//Se não tem mais métodos, dar update no ATIVO = f em todos métodos desse URL, inserir linha com registro da exclusão
-            String insert = "INSERT INTO \"public\".\"Table_HML_EXT\" (\"API\", \"URL\", \"METODO\", \"QUOTA\", \"SISTEMA\", \"CLIENT_KEY\", \"USER\", \"INSERCAO\", \"ATIVO\", \"TYPE\", \"DESCRIPTION\", \"ORG\") VALUES (?,?,?,?,?,?,?,?,?,?,?,?) RETURNING *";
+            String insert = "INSERT INTO \"public\".\"" + tabela + "\" (\"API\", \"URL\", \"METODO\", \"QUOTA\", \"SISTEMA\", \"CLIENT_KEY\", \"USER\", \"INSERCAO\", \"ATIVO\", \"TYPE\", \"DESCRIPTION\", \"ORG\") VALUES (?,?,?,?,?,?,?,?,?,?,?,?) RETURNING *";
             PreparedStatement pst2 = con.prepareStatement(insert, PreparedStatement.RETURN_GENERATED_KEYS);
 
             pst2.setString(1, getInsertAPI()); //API

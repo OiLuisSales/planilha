@@ -28,7 +28,7 @@ import com.cedarsoftware.util.io.JsonWriter;
  */
 public class GetCaPermissao {
 
-    private static String server = "https://apimhml.oi.net.br";
+    private static String server = "";
     private static String urlLogin = "/teste/planilha/logar";
     private static String urlOTK = "";
     private static String token = "";
@@ -70,8 +70,8 @@ public class GetCaPermissao {
         //desativando a validacao de certificado.
         SSLTool ssltool = new SSLTool();
         ssltool.disableCertificateValidation();
-
-        String url = (server+urlLogin);
+        
+        String url = ("https://apimhml.oi.net.br"+urlLogin);//URL de login fixado na AMGHX01
         URL obj = new URL(url);
         HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
 
