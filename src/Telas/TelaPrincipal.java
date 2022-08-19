@@ -5,13 +5,17 @@
 package Telas;
 
 import Apontamento.CRUDOTK;
+import static Apontamento.CRUDOTK.APIsPermitidas;
 import static Apontamento.GetCaPermissao.getServer;
 import static Apontamento.GetCaPermissao.setServer;
 import Codigo.ConexaoBD;
 import static Codigo.ConexaoBD.*;
+import Codigo.MatrizDinamica;
 import com.cedarsoftware.util.io.JsonWriter;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
+import java.io.IOException;
+import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -34,9 +38,12 @@ import org.json.JSONObject;
  */
 public class TelaPrincipal extends javax.swing.JFrame {
 
-    public static String versao = "0.9005b";
+    public static String versao = "0.9009b";
     public static String queryRunning = "";
+    public static int apagar = 0;
     public static int JJ = 0;
+    public static long agora = System.currentTimeMillis();
+    public static boolean espera = false;
 
     /**
      * Creates new form TelaPrincipal
@@ -125,6 +132,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
             @Override
             public void insertUpdate(DocumentEvent e) {
                 try {
+                    System.out.println("listener insertUpdate");
                     acao();
                 } catch (ClassNotFoundException | SQLException ex) {
                     Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
@@ -134,6 +142,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
             @Override
             public void removeUpdate(DocumentEvent e) {
                 try {
+                    System.out.println("listener removeUpdate");
                     acao();
                 } catch (ClassNotFoundException | SQLException ex) {
                     Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
@@ -143,6 +152,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
             @Override
             public void changedUpdate(DocumentEvent e) {
                 try {
+                    System.out.println("listener changedUpdate");
                     acao();
                 } catch (ClassNotFoundException | SQLException ex) {
                     Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
@@ -150,29 +160,42 @@ public class TelaPrincipal extends javax.swing.JFrame {
             }
 
             public void acao() throws ClassNotFoundException, SQLException {
-                if (queryRunning.equals(txtURLAPI.getText())) {
-                    System.out.println("texto igual");
+                if (queryRunning.equals(txtURLAPI.getText()) || txtURLAPI.getText().isEmpty()) { //url igual da var na memoria ou vazio
                 } else {
+                    queryRunning = txtURLAPI.getText();//padroniza o listener do URL com novo valor
                     new Thread() {
                         @Override
                         public void run() {
-                            setInsertURL(txtURLAPI.getText());
-                            ConexaoBD conexaobd = new ConexaoBD();
-                            try {
-                                ArrayList<String> sistemas = conexaobd.retornarSistemas(getInsertURL(), pegarAmbiente());
-                                Vector<String> columnNames = new Vector<>();
-                                columnNames.add("Sistemas que usam este API");
-                                DefaultTableModel model = (DefaultTableModel) tblSistemas.getModel();
-                                model.setNumRows(0);
-                                for (int i = 0; i < sistemas.size(); i++) {
-                                    Vector row = new Vector();
-                                    row.add(sistemas.get(i));
-                                    model.addRow(row);
+                            DefaultTableModel model = (DefaultTableModel) tblSistemas.getModel();
+                            model.setNumRows(0);//limpeza enquanto roda query
+                            int loop = 0;
+                            String queryRunningLocal = txtURLAPI.getText();//var para não mexer com a global
+                            while (queryRunningLocal.equals(txtURLAPI.getText()) && loop < 4) {
+                                try {
+                                    new Thread().sleep(1000);//aguardando um segundo.
+                                    loop++;
+                                } catch (InterruptedException ex) {
+                                    Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
                                 }
-                            } catch (ClassNotFoundException | SQLException ex) {
-                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+
+                                if (loop > 1) {//depois de 2 iterações rodar select no banco
+                                    atualizarMetodos(txtURLAPI.getText());
+                                    setInsertURL(txtURLAPI.getText());
+                                    ConexaoBD conexaobd = new ConexaoBD();
+                                    try {
+                                        ArrayList<String> sistemas = conexaobd.retornarSistemas(getInsertURL(), pegarAmbiente());
+                                        model.setNumRows(0);//limpeza reduntante de segurança, pois houveram casos de duplicidade
+                                        for (int i = 0; i < sistemas.size(); i++) {
+                                            Vector row = new Vector();
+                                            row.add(sistemas.get(i));
+                                            model.addRow(row);
+                                        }
+                                    } catch (ClassNotFoundException | SQLException ex) {
+                                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                                    }
+                                    loop = loop + 10;
+                                }
                             }
-                            queryRunning = txtURLAPI.getText();
                         }
                     }.start();
                 }
@@ -387,7 +410,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
             }
         });
 
-        jLabel3.setText("Json BD");
+        jLabel3.setText("Json OTK retornado");
 
         comboBoxServer.setModel(new javax.swing.DefaultComboBoxModel<>(new String[] { "apimdev", "apimhml.oi.net.br", "apim.oi.net.br", "apimbss.oi.net.br", "apimhmllocal.intranet", "apimlocal.intranet", "apimbsslocal.intranet", "apimoiplay.oi.net.br", "apimoiplaylocal.intranet" }));
 
@@ -541,398 +564,555 @@ public class TelaPrincipal extends javax.swing.JFrame {
         pack();
     }// </editor-fold>//GEN-END:initComponents
 
-    public void setarJsonTxtArea(String json) {
+    public void atualizarMetodos(String url) {
+        if (queryRunning != url) {
+            queryRunning = url;
+            txtAPI.setVisible(false);
+
+            new Thread() {//pegando nome do API pelo URL no SSG
+                @Override
+                public void run() {
+                    try {
+                        String api_outdoor = CRUDOTK.getAPI(url);
+                        api_outdoor = "<html><font color='green'>" + api_outdoor + "</font></html>";
+                        txtAPI.setText(api_outdoor);
+                        txtAPI.setVisible(true);
+                    } catch (Exception ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+            }.start();
+
+            new Thread() {//pegando nome do API pelo banco heroku
+                @Override
+                public void run() {
+
+                    ConexaoBD conexaobd = new ConexaoBD();
+                    try {
+                        String api_outdoor = conexaobd.getAPI(url, pegarAmbiente());
+                        if (!api_outdoor.equals("no_name")) {
+                            api_outdoor = "<html><font color='blue'>" + api_outdoor + "</font></html>";
+                            txtAPI.setText(api_outdoor);
+                            txtAPI.setVisible(true);
+                        }
+                    } catch (ClassNotFoundException ex) {
+                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+
+                }
+            }.start();
+
+            String matrix[][] = parseJsonToMatrix(jsonTxtArea.getText());
+
+            chkGet.setSelected(false);
+            chkPut.setSelected(false);
+            chkPost.setSelected(false);
+            chkDelete.setSelected(false);
+            chkAll.setSelected(false);
+            chkPatch.setSelected(false);
+
+            for (int i = 0; i < matrix.length; i++) {
+                if (matrix[i][0].equals(txtURLAPI.getText())) {
+                    for (int j = 0; j < matrix[i].length; j++) {
+
+                        if ((j != 0) && matrix[i][j] != null) {
+                            JSONObject metodo = new JSONObject(matrix[i][j]);
+                            String keyMetodo = metodo.keys().next();
+                            int quota = (int) metodo.getJSONObject(keyMetodo).getInt("quota");
+                            switch (keyMetodo) {
+                                case "GET":
+                                    chkGet.setSelected(true);
+                                    spinCotaGet.setValue(quota);
+                                    break;
+                                case "POST":
+                                    chkPost.setSelected(true);
+                                    spinCotaPost.setValue(quota);
+                                    break;
+                                case "PUT":
+                                    chkPut.setSelected(true);
+                                    spinCotaPut.setValue(quota);
+                                    break;
+                                case "DELETE":
+                                    chkDelete.setSelected(true);
+                                    spinCotaDelete.setValue(quota);
+                                    break;
+                                case "ALL":
+                                    chkAll.setSelected(true);
+                                    spinCotaAll.setValue(quota);
+                                    break;
+                                case "PATCH":
+                                    chkPatch.setSelected(true);
+                                    spinCotaPatch.setValue(quota);
+                                    break;
+                            }
+
+                        }
+                    }
+                }
+
+            }
+        } else {
+            System.out.println("texto igual, saindo do método");
+        }
+    }
+
+    public static void setarJsonTxtArea(String json) {
         jsonTxtArea.setText(json);
     }
 
     public String pegarAmbiente() {
         String tabela = comboBoxServer.getSelectedItem().toString();
-        setServer("https://" + tabela);
 
         switch (tabela) {//configurando tabela
             case "apimdev":
                 ConexaoBD.setTableBD("Table_DEV_INT");
+                tabela = "amgdx01:8443";
                 break;
             case "apimhml.oi.net.br":
                 ConexaoBD.setTableBD("Table_HML_EXT");
+                tabela = "amghx01:8443";
                 break;
             case "apim.oi.net.br":
                 ConexaoBD.setTableBD("Table_PRD_EXT");
+                tabela = "amgrx01a:8443";
                 break;
             case "apimbss.oi.net.br":
                 ConexaoBD.setTableBD("Table_BSS_EXT");
+                tabela = "amgpx08a:8443";
                 break;
             case "apimhmllocal.intranet":
                 ConexaoBD.setTableBD("Table_HML_INT");
+                tabela = "amghx03:8443";
                 break;
             case "apimlocal.intranet":
                 ConexaoBD.setTableBD("Table_PRD_INT");
+                tabela = "amgpx03a:8443";
                 break;
             case "apimbsslocal.intranet":
                 ConexaoBD.setTableBD("Table_BSS_INT");
+                tabela = "amgpx09a:8443";
                 break;
             case "apimoiplaylocal.intranet":
                 ConexaoBD.setTableBD("Table_PLAY_INT");
+                tabela = "amgpx20a:8443";
                 break;
             case "apimlocaloiplay.oi.net.br":
                 ConexaoBD.setTableBD("Table_PLAY_EXT");
+                tabela = "amgpx18a:8443";
                 break;
         }
+        setServer("https://" + tabela);
 
         return getTableBD();
     }
     private void btnConcederPermissaoActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnConcederPermissaoActionPerformed
-        if (!getInsertClient_key().equals(campoCliente.getText())) {//força o insertSistema esteja alimentado, caso o usuário não tenha clicado em buscar.
-            setInsertClient_key(campoCliente.getText());
-            ConexaoBD conexaobd = new ConexaoBD();
-            try {
-                conexaobd.buscarClient_key(getInsertClient_key(), pegarAmbiente());//após rodar, também alimentará setInsertSistema()
-            } catch (ClassNotFoundException ex) {
-                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-            }
-        }
-
-        setInsertURL(txtURLAPI.getText());
-        ConexaoBD conexaobd = new ConexaoBD();
-        boolean pelomenos1 = false;
-        if (chkGet.isSelected()) {
-            pelomenos1 = true;
-        }
-        if (chkPost.isSelected()) {
-            pelomenos1 = true;
-        }
-        if (chkPut.isSelected()) {
-            pelomenos1 = true;
-        }
-        if (chkDelete.isSelected()) {
-            pelomenos1 = true;
-        }
-        if (chkAll.isSelected()) {
-            pelomenos1 = true;
-        }
-        if (chkPatch.isSelected()) {
-            pelomenos1 = true;
-        }
-        if (!pelomenos1) {
-            String typedJson = jsonTxtArea.getText();
-            if (typedJson.isEmpty()) {
-                typedJson = "{\"APIsPermitidas_v2\":{}}";
-            }
-            JSONObject APIPermitidasv2 = new JSONObject(typedJson);
-            String urlAPI = txtURLAPI.getText();
-
-            String message = "Não foi encontrado nenhum método. Deseja apagar o URL" + urlAPI + "?";
-            String title = "Confirmação";
-
-            int reply = JOptionPane.showConfirmDialog(null, message, title, JOptionPane.YES_NO_OPTION);//Exibe caixa de dialogo (veja figura) solicitando confirmação ou não. 
-            if (reply == JOptionPane.YES_OPTION) {//Se o usuário clicar em "Sim" retorna 0 pra variavel reply, se informado não retorna 1
-                setInsertApagar(true);//Dar update no ATIVO = f em todos métodos desse URL, inserir linha com registro da exclusão
-                APIPermitidasv2.getJSONObject("APIsPermitidas_v2").remove(urlAPI);
-                String json = APIPermitidasv2.toString();
-                System.out.println("reply:" + reply);
-                json = JsonWriter.formatJson(json); //indentando   
-                jsonTxtArea.setText(json);
-                alimentaJtable(json);
-
-                try {
-                    conexaobd.maxInsercao(pegarAmbiente());
-                } catch (ClassNotFoundException ex) {
-                    Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+        do {
+            if (getInsertClient_key().toLowerCase().equals(campoCliente.getText().toLowerCase()) || getInsertSistema().toLowerCase().equals(campoCliente.getText().toLowerCase())) {//proibir conceder acesso sem antes buscar
+                String logMessage = JOptionPane.showInputDialog("Descrição. " + "Favor inserir comentário desta ação ");
+                if (logMessage == null) {
+                    System.out.println("abortado");
+                    break;
                 }
-
-                try {//conseguindo API TODO melhorar para não ter que buscar o nome do API no banco, e sim, num array quando apertar o buscarCliente
-                    setInsertAPI(conexaobd.buscarAPI(getInsertURL(), pegarAmbiente()));
-                } catch (ClassNotFoundException | SQLException ex) {
-                    Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                }
-
-                try {
-                    conexaobd.inativador(getInsertURL(), getInsertClient_key(), pegarAmbiente());//método chama query para desativar tudo que tem no banco com esse URL e client_key antes de colocar os métodos novos. 
-                } catch (ClassNotFoundException | SQLException ex) {
-                    Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                }
-
-                System.out.println("PUT no otk, de apagar URL:");
-                try {
-                    CRUDOTK.putOTK(getInsertClient_key(), getInsertSistema(), getInsertOrg(), getInsertDescription(), getInsertType(), jsonTxtArea.getText(), getInsertUser(), getServer());
-                } catch (Exception ex) {
-                    Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                }
-                System.out.println(jsonTxtArea.getText());
-                JOptionPane.showMessageDialog(rootPane, "URL " + urlAPI + " deletado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
-            }
-        } else {
-
-            try {
-                conexaobd.maxInsercao(pegarAmbiente());
-            } catch (ClassNotFoundException ex) {
-                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-            }
-
-            try {//conseguindo API TODO melhorar para não ter que buscar o nome do API no banco, e sim, num array quando apertar o buscarCliente
-                setInsertAPI(conexaobd.buscarAPI(getInsertURL(), pegarAmbiente()));
-            } catch (ClassNotFoundException | SQLException ex) {
-                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-            }
-
-            try {
-                conexaobd.inativador(getInsertURL(), getInsertClient_key(), pegarAmbiente());//método chama query para desativar tudo que tem no banco com esse URL e client_key antes de colocar os métodos novos. 
-            } catch (ClassNotFoundException | SQLException ex) {
-                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-            }
-
-            String[][] matrix = parseJsonToMatrix(jsonTxtArea.getText());
-            int posUrl = -1;
-
-            // leitura do vetor
-            for (int i = 0; i < matrix.length; i++) {
-
-                // se existir no vetor o número digitado
-                if (matrix[i][0].equals(txtURLAPI.getText())) {
-
-                    posUrl = i; //armazenando posição do vetor que o URL foi encontrado
-                }
-            }
-
-            if (posUrl != -1) {//verifica se já tem o URL no vetor
-
-                matrix[posUrl][0] = txtURLAPI.getText();
 
                 setInsertURL(txtURLAPI.getText());
-
-                pelomenos1 = false;
+                String custom_key = "";//armazena APIsPermitidas_v2
+                ConexaoBD conexaobd = new ConexaoBD();
+                boolean pelomenos1 = false;
                 if (chkGet.isSelected()) {
-                    matrix[posUrl][1] = "  {\"GET\":{\"quota\":" + spinCotaGet.getValue() + "} }     ";
                     pelomenos1 = true;
-
-                    setInsertMetodo("GET");
-                    setInsertCota(Integer.parseInt(spinCotaGet.getValue().toString()));
-
-                    try {//INSERT NO BANCO
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente());
-                    } catch (ClassNotFoundException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (SQLException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                } else {
-                    matrix[posUrl][1] = null;
                 }
                 if (chkPost.isSelected()) {
-                    matrix[posUrl][2] = "  {\"POST\":{\"quota\":" + spinCotaPost.getValue() + "}}     ";
                     pelomenos1 = true;
-
-                    setInsertMetodo("POST");
-                    setInsertCota(Integer.parseInt(spinCotaPost.getValue().toString()));
-
-                    try {//INSERT NO BANCO
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente());
-                    } catch (ClassNotFoundException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (SQLException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                } else {
-                    matrix[posUrl][2] = null;
                 }
                 if (chkPut.isSelected()) {
-                    matrix[posUrl][3] = "  {\"PUT\":{\"quota\":" + spinCotaPut.getValue() + "}  }   ";
                     pelomenos1 = true;
-
-                    setInsertMetodo("PUT");
-                    setInsertCota(Integer.parseInt(spinCotaPut.getValue().toString()));
-
-                    try {//INSERT NO BANCO
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente());
-                    } catch (ClassNotFoundException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (SQLException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                } else {
-                    matrix[posUrl][3] = null;
                 }
                 if (chkDelete.isSelected()) {
-                    matrix[posUrl][4] = "  {\"DELETE\":{\"quota\":" + spinCotaDelete.getValue() + "} }    ";
                     pelomenos1 = true;
-
-                    setInsertMetodo("DELETE");
-                    setInsertCota(Integer.parseInt(spinCotaDelete.getValue().toString()));
-
-                    try {//INSERT NO BANCO
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente());
-                    } catch (ClassNotFoundException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (SQLException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                } else {
-                    matrix[posUrl][4] = null;
                 }
                 if (chkAll.isSelected()) {
-                    matrix[posUrl][5] = "  {\"ALL\":{\"quota\":" + spinCotaAll.getValue() + "}   }  ";
                     pelomenos1 = true;
-
-                    setInsertMetodo("ALL");
-                    setInsertCota(Integer.parseInt(spinCotaAll.getValue().toString()));
-
-                    try {//INSERT NO BANCO
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente());
-                    } catch (ClassNotFoundException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (SQLException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                } else {
-                    matrix[posUrl][5] = null;
                 }
                 if (chkPatch.isSelected()) {
-                    matrix[posUrl][6] = "  {\"PATCH\":{\"quota\":" + spinCotaPatch.getValue() + "}   }  ";
                     pelomenos1 = true;
+                }
+                if (!pelomenos1) {//cai nesse enlace se não marcou nenhum método
+                    String typedJson = jsonTxtArea.getText();
 
-                    setInsertMetodo("PATCH");
-                    setInsertCota(Integer.parseInt(spinCotaPatch.getValue().toString()));
+                    if (typedJson.isEmpty()) {
+                        typedJson = "{\"APIsPermitidas_v2\":{}}";
+                    }
 
-                    try {//INSERT NO BANCO
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente());
-                    } catch (ClassNotFoundException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (SQLException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                    JSONObject APIPermitidasv2 = new JSONObject(typedJson);
+                    String urlAPI = txtURLAPI.getText();
+
+                    String message = "Não foi encontrado nenhum método. Deseja apagar o URL" + urlAPI + "?";
+                    String title = "Confirmação";
+
+                    int reply = JOptionPane.showConfirmDialog(null, message, title, JOptionPane.YES_NO_OPTION);//Exibe caixa de dialogo solicitando confirmação ou não. 
+                    if (reply == JOptionPane.YES_OPTION) {//Se o usuário clicar em "Sim" retorna 0 pra variavel reply, se informado não retorna 1
+                        setInsertApagar(true);//Dar update no ATIVO = f em todos métodos desse URL, inserir linha com registro da exclusão
+                        APIPermitidasv2.getJSONObject("APIsPermitidas_v2").remove(urlAPI);
+                        String json = APIPermitidasv2.toString();
+                        System.out.println("reply:" + reply);
+                        json = JsonWriter.formatJson(json); //indentando   
+                        jsonTxtArea.setText(json);
+                        if (!CRUDOTK.APIsPermitidas.isEmpty()) {
+                            jsonTxtArea.setText(juntarAPIsPermitidas(jsonTxtArea.getText()));
+                        }
+                        alimentaJtable(json);
+
+                        try {
+                            conexaobd.maxInsercao(pegarAmbiente());
+                        } catch (ClassNotFoundException ex) {
+                            Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+
+                        try {//conseguindo API TODO melhorar para não ter que buscar o nome do API no banco, e sim, num array quando apertar o buscarCliente
+                            setInsertAPI(conexaobd.buscarAPI(getInsertURL(), pegarAmbiente()));
+                        } catch (ClassNotFoundException | SQLException ex) {
+                            Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+
+                        try {
+                            conexaobd.inativador(getInsertURL(), getInsertClient_key(), pegarAmbiente(), logMessage);//método chama query para desativar tudo que tem no banco com esse URL e client_key antes de colocar os métodos novos. 
+                        } catch (ClassNotFoundException | SQLException ex) {
+                            Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+
+                        System.out.println("PUT no otk, de apagar URL:");
+
+                        try {//pegar APIsPermitidas legado. Da erro qdo client_key n for o client_ident. TODO API que retorna client_key vigente e dar UPDATE no sistema
+                            CRUDOTK.getOTK(getInsertClient_key());
+                            custom_key = juntarAPIsPermitidas(jsonTxtArea.getText());
+                            jsonTxtArea.setText(custom_key);
+                        } catch (Exception ex) {
+                            APIsPermitidas = "";
+                            JOptionPane.showMessageDialog(null, "client_key diferente do client_ident\n" + (ex), "Erro! IOException:", JOptionPane.ERROR_MESSAGE);
+                        }
+
+                        try {
+                            CRUDOTK.putOTK(getInsertClient_key(), getInsertSistema(), getInsertOrg(), getInsertDescription(), getInsertType(), custom_key, getInsertUser(), getServer());
+                        } catch (IOException | InterruptedException ex) {
+                            Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                        }
+                        System.out.println(jsonTxtArea.getText());
+                        JOptionPane.showMessageDialog(rootPane, "URL " + urlAPI + " deletado com sucesso!", "Sucesso", JOptionPane.INFORMATION_MESSAGE);
                     }
                 } else {
-                    matrix[posUrl][6] = null;
-                }
-                if (!pelomenos1) {
-                    //já tratado
-                } else {
-                    gerarJson(matrix);
-                    System.out.println("PUT no otk de overwrite:");
+
                     try {
-                        CRUDOTK.putOTK(getInsertClient_key(), getInsertSistema(), getInsertOrg(), getInsertDescription(), getInsertType(), jsonTxtArea.getText(), getInsertUser(), getServer());
-                    } catch (Exception ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                    System.out.println(jsonTxtArea.getText());
-                }
-
-            } else {//não possui dentro do vetor, acrescentar novo URL
-                String[][] newMatrix = new String[matrix.length + 1][7];
-
-                for (int i = 0; i < matrix.length; i++) {
-                    for (int j = 0; j < matrix[i].length; j++) {
-                        newMatrix[i][j] = matrix[i][j];
-                    }
-                }
-
-                boolean peloMenos1 = false;
-                newMatrix[newMatrix.length - 1][0] = getInsertURL();
-                if (chkGet.isSelected()) {
-                    newMatrix[newMatrix.length - 1][1] = "  {\"GET\":{\"quota\":" + spinCotaGet.getValue() + "} }     ";
-                    peloMenos1 = true;
-                    setInsertMetodo("GET");
-                    setInsertCota(Integer.parseInt(spinCotaGet.getValue().toString()));
-
-                    try {//INSERT NO BANCO
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente());
+                        conexaobd.maxInsercao(pegarAmbiente());
                     } catch (ClassNotFoundException ex) {
                         Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (SQLException ex) {
+                    }
+
+                    try {//conseguindo API TODO melhorar para não ter que buscar o nome do API no banco, e sim, num array quando apertar o buscarCliente
+                        setInsertAPI(conexaobd.buscarAPI(getInsertURL(), pegarAmbiente()));
+                    } catch (ClassNotFoundException | SQLException ex) {
                         Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                }
-                if (chkPost.isSelected()) {
-                    newMatrix[newMatrix.length - 1][2] = "  {\"POST\":{\"quota\":" + spinCotaPost.getValue() + "}}     ";
-                    peloMenos1 = true;
 
-                    setInsertMetodo("POST");
-                    setInsertCota(Integer.parseInt(spinCotaPost.getValue().toString()));
-
-                    try {//INSERT NO BANCO
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente());
-                    } catch (ClassNotFoundException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (SQLException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                if (chkPut.isSelected()) {
-                    newMatrix[newMatrix.length - 1][3] = "  {\"PUT\":{\"quota\":" + spinCotaPut.getValue() + "}  }   ";
-                    peloMenos1 = true;
-
-                    setInsertMetodo("PUT");
-                    setInsertCota(Integer.parseInt(spinCotaPut.getValue().toString()));
-
-                    try {//INSERT NO BANCO
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente());
-                    } catch (ClassNotFoundException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (SQLException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                if (chkDelete.isSelected()) {
-                    newMatrix[newMatrix.length - 1][4] = "  {\"DELETE\":{\"quota\":" + spinCotaDelete.getValue() + "} }    ";
-                    peloMenos1 = true;
-
-                    setInsertMetodo("DELETE");
-                    setInsertCota(Integer.parseInt(spinCotaDelete.getValue().toString()));
-
-                    try {//INSERT NO BANCO
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente());
-                    } catch (ClassNotFoundException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (SQLException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                if (chkAll.isSelected()) {
-                    newMatrix[newMatrix.length - 1][5] = "  {\"ALL\":{\"quota\":" + spinCotaAll.getValue() + "}   }  ";
-                    peloMenos1 = true;
-
-                    setInsertMetodo("ALL");
-                    setInsertCota(Integer.parseInt(spinCotaAll.getValue().toString()));
-
-                    try {//INSERT NO BANCO
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente());
-                    } catch (ClassNotFoundException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (SQLException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-                if (chkPatch.isSelected()) {
-                    newMatrix[newMatrix.length - 1][6] = "  {\"PATCH\":{\"quota\":" + spinCotaPatch.getValue() + "}   }  ";
-                    peloMenos1 = true;
-
-                    setInsertMetodo("PATCH");
-                    setInsertCota(Integer.parseInt(spinCotaPatch.getValue().toString()));
-
-                    try {//INSERT NO BANCO
-                        conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente());
-                    } catch (ClassNotFoundException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    } catch (SQLException ex) {
-                        Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                    }
-                }
-
-                if (!peloMenos1) {
-                    JOptionPane.showMessageDialog(rootPane, "Favor escolher ao menos um método", "Erro", JOptionPane.ERROR_MESSAGE);
-                } else {
-                    gerarJson(newMatrix);
-                    System.out.println("PUT no otk:");
                     try {
-                        CRUDOTK.putOTK(getInsertClient_key(), getInsertSistema(), getInsertOrg(), getInsertDescription(), getInsertType(), jsonTxtArea.getText(), getInsertUser(), getServer());
-                    } catch (Exception ex) {
+                        conexaobd.inativador(getInsertURL(), getInsertClient_key(), pegarAmbiente(), logMessage);//método chama query para desativar tudo que tem no banco com esse URL e client_key antes de colocar os métodos novos. 
+                    } catch (ClassNotFoundException | SQLException ex) {
                         Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
                     }
-                    System.out.println(jsonTxtArea.getText());
+
+                    String[][] matrix = parseJsonToMatrix(jsonTxtArea.getText());
+                    int posUrl = -1;
+
+                    // leitura do vetor
+                    for (int i = 0; i < matrix.length; i++) {
+
+                        // se existir no vetor o número digitado
+                        if (matrix[i][0].equals(txtURLAPI.getText())) {
+
+                            posUrl = i; //armazenando posição do vetor que o URL foi encontrado
+                        }
+                    }
+
+                    if (posUrl != -1) {//verifica se já tem o URL no vetor
+
+                        matrix[posUrl][0] = txtURLAPI.getText();
+
+                        setInsertURL(txtURLAPI.getText());
+
+                        pelomenos1 = false;
+                        if (chkGet.isSelected()) {
+                            matrix[posUrl][1] = "  {\"GET\":{\"quota\":" + spinCotaGet.getValue() + "} }     ";
+                            pelomenos1 = true;
+
+                            setInsertMetodo("GET");
+                            setInsertCota(Integer.parseInt(spinCotaGet.getValue().toString()));
+
+                            try {//INSERT NO BANCO
+                                conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), true, getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente(), logMessage);
+                            } catch (ClassNotFoundException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (SQLException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                        } else {
+                            matrix[posUrl][1] = null;
+                        }
+                        if (chkPost.isSelected()) {
+                            matrix[posUrl][2] = "  {\"POST\":{\"quota\":" + spinCotaPost.getValue() + "}}     ";
+                            pelomenos1 = true;
+
+                            setInsertMetodo("POST");
+                            setInsertCota(Integer.parseInt(spinCotaPost.getValue().toString()));
+
+                            try {//INSERT NO BANCO
+                                conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), true, getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente(), logMessage);
+                            } catch (ClassNotFoundException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (SQLException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                        } else {
+                            matrix[posUrl][2] = null;
+                        }
+                        if (chkPut.isSelected()) {
+                            matrix[posUrl][3] = "  {\"PUT\":{\"quota\":" + spinCotaPut.getValue() + "}  }   ";
+                            pelomenos1 = true;
+
+                            setInsertMetodo("PUT");
+                            setInsertCota(Integer.parseInt(spinCotaPut.getValue().toString()));
+
+                            try {//INSERT NO BANCO
+                                conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), true, getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente(), logMessage);
+                            } catch (ClassNotFoundException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (SQLException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                        } else {
+                            matrix[posUrl][3] = null;
+                        }
+                        if (chkDelete.isSelected()) {
+                            matrix[posUrl][4] = "  {\"DELETE\":{\"quota\":" + spinCotaDelete.getValue() + "} }    ";
+                            pelomenos1 = true;
+
+                            setInsertMetodo("DELETE");
+                            setInsertCota(Integer.parseInt(spinCotaDelete.getValue().toString()));
+
+                            try {//INSERT NO BANCO
+                                conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), true, getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente(), logMessage);
+                            } catch (ClassNotFoundException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (SQLException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                        } else {
+                            matrix[posUrl][4] = null;
+                        }
+                        if (chkAll.isSelected()) {
+                            matrix[posUrl][5] = "  {\"ALL\":{\"quota\":" + spinCotaAll.getValue() + "}   }  ";
+                            pelomenos1 = true;
+
+                            setInsertMetodo("ALL");
+                            setInsertCota(Integer.parseInt(spinCotaAll.getValue().toString()));
+
+                            try {//INSERT NO BANCO
+                                conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), true, getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente(), logMessage);
+                            } catch (ClassNotFoundException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (SQLException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                        } else {
+                            matrix[posUrl][5] = null;
+                        }
+                        if (chkPatch.isSelected()) {
+                            matrix[posUrl][6] = "  {\"PATCH\":{\"quota\":" + spinCotaPatch.getValue() + "}   }  ";
+                            pelomenos1 = true;
+
+                            setInsertMetodo("PATCH");
+                            setInsertCota(Integer.parseInt(spinCotaPatch.getValue().toString()));
+
+                            try {//INSERT NO BANCO
+                                conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), true, getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente(), logMessage);
+                            } catch (ClassNotFoundException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (SQLException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                        } else {
+                            matrix[posUrl][6] = null;
+                        }
+                        if (!pelomenos1) {
+                            //já tratado
+                        } else {
+                            gerarJson(matrix);
+                            System.out.println("PUT no otk de overwrite:");
+
+                            try {//pegar APIsPermitidas legado. Da erro qdo client_key n for o client_ident. TODO API que retorna client_key vigente e dar UPDATE no sistema
+                                CRUDOTK.getOTK(getInsertClient_key());
+                                custom_key = juntarAPIsPermitidas(jsonTxtArea.getText());
+                                jsonTxtArea.setText(custom_key);
+                            } catch (Exception ex) {
+                                APIsPermitidas = "";
+                                JOptionPane.showMessageDialog(null, "client_key diferente do client_ident\n" + (ex), "Erro! IOException:", JOptionPane.ERROR_MESSAGE);
+                            }
+
+                            try {
+                                CRUDOTK.putOTK(getInsertClient_key(), getInsertSistema(), getInsertOrg(), getInsertDescription(), getInsertType(), custom_key, getInsertUser(), getServer());
+                            } catch (Exception ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            System.out.println(jsonTxtArea.getText());
+                        }
+
+                    } else {//não possui dentro do vetor, acrescentar novo URL
+                        String[][] newMatrix = new String[matrix.length + 1][7];
+
+                        for (int i = 0; i < matrix.length; i++) {
+                            for (int j = 0; j < matrix[i].length; j++) {
+                                newMatrix[i][j] = matrix[i][j];
+                            }
+                        }
+
+                        boolean peloMenos1 = false;
+                        newMatrix[newMatrix.length - 1][0] = getInsertURL();
+                        if (chkGet.isSelected()) {
+                            newMatrix[newMatrix.length - 1][1] = "  {\"GET\":{\"quota\":" + spinCotaGet.getValue() + "} }     ";
+                            peloMenos1 = true;
+                            setInsertMetodo("GET");
+                            setInsertCota(Integer.parseInt(spinCotaGet.getValue().toString()));
+
+                            try {//INSERT NO BANCO
+                                conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), true, getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente(), logMessage);
+                            } catch (ClassNotFoundException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (SQLException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                        }
+                        if (chkPost.isSelected()) {
+                            newMatrix[newMatrix.length - 1][2] = "  {\"POST\":{\"quota\":" + spinCotaPost.getValue() + "}}     ";
+                            peloMenos1 = true;
+
+                            setInsertMetodo("POST");
+                            setInsertCota(Integer.parseInt(spinCotaPost.getValue().toString()));
+
+                            try {//INSERT NO BANCO
+                                conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), true, getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente(), logMessage);
+                            } catch (ClassNotFoundException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (SQLException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                        }
+                        if (chkPut.isSelected()) {
+                            newMatrix[newMatrix.length - 1][3] = "  {\"PUT\":{\"quota\":" + spinCotaPut.getValue() + "}  }   ";
+                            peloMenos1 = true;
+
+                            setInsertMetodo("PUT");
+                            setInsertCota(Integer.parseInt(spinCotaPut.getValue().toString()));
+
+                            try {//INSERT NO BANCO
+                                conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), true, getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente(), logMessage);
+                            } catch (ClassNotFoundException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (SQLException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                        }
+                        if (chkDelete.isSelected()) {
+                            newMatrix[newMatrix.length - 1][4] = "  {\"DELETE\":{\"quota\":" + spinCotaDelete.getValue() + "} }    ";
+                            peloMenos1 = true;
+
+                            setInsertMetodo("DELETE");
+                            setInsertCota(Integer.parseInt(spinCotaDelete.getValue().toString()));
+
+                            try {//INSERT NO BANCO
+                                conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), true, getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente(), logMessage);
+                            } catch (ClassNotFoundException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (SQLException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                        }
+                        if (chkAll.isSelected()) {
+                            newMatrix[newMatrix.length - 1][5] = "  {\"ALL\":{\"quota\":" + spinCotaAll.getValue() + "}   }  ";
+                            peloMenos1 = true;
+
+                            setInsertMetodo("ALL");
+                            setInsertCota(Integer.parseInt(spinCotaAll.getValue().toString()));
+
+                            try {//INSERT NO BANCO
+                                conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), true, getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente(), logMessage);
+                            } catch (ClassNotFoundException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (SQLException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                        }
+                        if (chkPatch.isSelected()) {
+                            newMatrix[newMatrix.length - 1][6] = "  {\"PATCH\":{\"quota\":" + spinCotaPatch.getValue() + "}   }  ";
+                            peloMenos1 = true;
+
+                            setInsertMetodo("PATCH");
+                            setInsertCota(Integer.parseInt(spinCotaPatch.getValue().toString()));
+
+                            try {//INSERT NO BANCO
+                                conexaobd.insertBD(insertAPI, getInsertURL(), getInsertMetodo(), getInsertCota(), getInsertSistema(), getInsertClient_key(), getInsertUser(), getINSERCAO(), true, getInsertType(), getInsertDescription(), getInsertOrg(), pegarAmbiente(), logMessage);
+                            } catch (ClassNotFoundException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            } catch (SQLException ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                        }
+
+                        if (!peloMenos1) {
+                            JOptionPane.showMessageDialog(rootPane, "Favor escolher ao menos um método", "Erro", JOptionPane.ERROR_MESSAGE);
+                        } else {
+                            gerarJson(newMatrix);
+                            System.out.println("PUT no otk:");
+
+                            try {//pegar APIsPermitidas legado. Da erro qdo client_key n for o client_ident. TODO API que retorna client_key vigente e dar UPDATE no sistema
+                                CRUDOTK.getOTK(getInsertClient_key());
+                                custom_key = juntarAPIsPermitidas(jsonTxtArea.getText());
+                                jsonTxtArea.setText(custom_key);
+                            } catch (Exception ex) {
+                                APIsPermitidas = "";
+                                JOptionPane.showMessageDialog(null, "client_key diferente do client_ident\n" + (ex), "Erro! IOException:", JOptionPane.ERROR_MESSAGE);
+                            }
+
+                            try {
+                                CRUDOTK.putOTK(getInsertClient_key(), getInsertSistema(), getInsertOrg(), getInsertDescription(), getInsertType(), custom_key, getInsertUser(), getServer());
+                            } catch (Exception ex) {
+                                Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            System.out.println(jsonTxtArea.getText());
+                        }
+                    }
                 }
+            } else {
+                JOptionPane.showMessageDialog(null, "Favor buscar antes de conceder acesso", "Aviso", JOptionPane.ERROR_MESSAGE);
             }
-
-        }
+        } while (false);//do-while para poder usar break;
     }//GEN-LAST:event_btnConcederPermissaoActionPerformed
+
+    public static String juntarAPIsPermitidas(String custom_key) {
+
+        if (CRUDOTK.APIsPermitidas.isEmpty()) {
+            System.out.println("custom_key:" + custom_key);
+        } else {
+            JSONObject APIsPermitidas = new JSONObject(CRUDOTK.APIsPermitidas);
+            JSONObject APIsPermitidas_v2 = new JSONObject(jsonTxtArea.getText()).getJSONObject("APIsPermitidas_v2");
+            JSONObject custom_keyObj = new JSONObject();
+
+            custom_keyObj.put("APIsPermitidas", APIsPermitidas);
+            custom_keyObj.put("APIsPermitidas_v2", APIsPermitidas_v2);
+
+            custom_key = custom_keyObj.toString();
+            custom_key = JsonWriter.formatJson(custom_key); //indentando   
+            System.out.println("custom_key:" + custom_key);
+        }
+        return custom_key;
+    }
 
     public static String gerarJson(String newMatrix[][]) {
 
@@ -958,8 +1138,8 @@ public class TelaPrincipal extends javax.swing.JFrame {
 
         }
 
-        try {//apagar Cadastro
-            apiPermitidasObj.getJSONObject("APIsPermitidas_v2").remove("Cadastro");
+        try {//apagar Cadastro (alguns clientes não tem API então são registrados no banco com a linha cadastro)
+            apiPermitidasObj.getJSONObject("APIsPermitidas_v2").remove("Cadastro");//mesmo n tendo Cadastro, n cai em exceção
         } catch (JSONException je) {
             System.out.println("Catch apagar Cadastro");
         }
@@ -973,26 +1153,94 @@ public class TelaPrincipal extends javax.swing.JFrame {
 
         return json;
     }
+
+    public static String gerarJson2(MatrizDinamica<String> matriz) {
+
+        JSONObject cota = new JSONObject();
+        JSONObject metodo = new JSONObject();
+        JSONObject urlAPIObj = new JSONObject();
+        JSONObject apiPermitidasObj = new JSONObject();
+
+        for (int i = 0; i < matriz.getSizeX(); i++) {
+            System.out.println(matriz.get(i, 0));
+            System.out.println("matriz.getSizeX:" + matriz.getSizeX());
+            for (int j = 0; j < matriz.getSizeY(i); j++) {
+                String elemento = matriz.get(i, j); // obtendo o elementos
+                System.out.println("elemento:" + elemento);
+                System.out.println("matriz.getSizeY:" + matriz.getSizeY(i));
+
+                if (j != 0) {//não quero URL, só vetor de métodos com a cota
+                    JSONObject cotaFor = new JSONObject(matriz.get(i, j));
+                    String keyMetodo = cotaFor.keys().next();
+                    int quota = (int) cotaFor.getJSONObject(keyMetodo).getInt("quota");
+                    cota.put("quota", quota); //inserindo inteiro na cota
+                    metodo.put(keyMetodo, cota);          //inserindo cota no método
+                    cota = new JSONObject();
+                }
+
+            }
+
+            urlAPIObj.put(matriz.get(i, 0), metodo); //inserindo método no URL
+            metodo = new JSONObject();
+            apiPermitidasObj.put("APIsPermitidas_v2", urlAPIObj);
+        }
+
+        try {//apagar Cadastro (alguns clientes não tem API então são registrados no banco com a linha cadastro)
+            apiPermitidasObj.getJSONObject("APIsPermitidas_v2").remove("Cadastro");//mesmo n tendo Cadastro, n cai em exceção
+        } catch (JSONException je) {
+            System.out.println("Catch apagar Cadastro");
+        }
+
+        String json = apiPermitidasObj.toString();
+
+        json = JsonWriter.formatJson(json); //indentando   
+        jsonTxtArea.setText(json);
+
+        alimentaJtable(json);
+
+        return json;
+    }
+
     private void btnBuscarClienteActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnBuscarClienteActionPerformed
         lblSistema.setVisible(false);
         setInsertSistema("");
         jsonTxtArea.setText("");
+        DefaultTableModel model = (DefaultTableModel) tblSistemas.getModel();//limpeza da tabela
+        model.setNumRows(0);//limpeza da tabela
         alimentaJtable("{\"APIsPermitidas_v2\":{}}");
         txtURLAPI.setText("");
         txtAPI.setVisible(false);
         setInsertClient_key(campoCliente.getText());
         ConexaoBD conexaobd = new ConexaoBD();
+        boolean notfound = true;
+
         try {
-            conexaobd.buscarClient_key(getInsertClient_key(), pegarAmbiente());//após rodar, também alimentará setInsertSistema()
+            notfound = conexaobd.buscarClient_key("SISTEMA", pegarAmbiente(), true);//procura por sistema e registro ativo;após rodar, também alimentará setInsertSistema()
+
+            if (notfound) {
+                notfound = conexaobd.buscarClient_key("SISTEMA", pegarAmbiente(), false);//procura por sistema e registro inativo
+            }
+
+            if (notfound) {
+                JOptionPane.showMessageDialog(null, "Sistema " + getInsertClient_key() + " não encontrado, buscando como client_id", "Não encontrado", JOptionPane.INFORMATION_MESSAGE);
+                setInsertClient_key(getInsertClient_key().replaceAll("	", "").replaceAll(" ", ""));
+                notfound = conexaobd.buscarClient_key("CLIENT_KEY", pegarAmbiente(), true);//procura por client_id e registro ativo
+            }
+
+            if (notfound) {
+                notfound = conexaobd.buscarClient_key("CLIENT_KEY", pegarAmbiente(), false);//procura por client_id e registro inativo
+            }
+
+            if (notfound) {
+                JOptionPane.showMessageDialog(null, "O " + getInsertClient_key() + " não existe no banco", "Não encontrado", JOptionPane.ERROR_MESSAGE);
+            }
+
         } catch (ClassNotFoundException ex) {
             Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-        }
-
-        try {//TODO colocar numa thread
-            CRUDOTK.getOTK(getInsertClient_key());
         } catch (Exception ex) {
             Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
         }
+
         lblSistema.setText(getInsertSistema());
         lblSistema.setVisible(true);
     }//GEN-LAST:event_btnBuscarClienteActionPerformed
@@ -1017,6 +1265,23 @@ public class TelaPrincipal extends javax.swing.JFrame {
         }
     }
 
+    public static void alimentaJtable2(MatrizDinamica<String> matriz) {
+
+        Vector<String> columnNames = new Vector<>();
+        columnNames.add("URL");
+
+        DefaultTableModel model = (DefaultTableModel) tblUrl.getModel();
+        model.setNumRows(0);
+
+        for (int i = 0; i < matriz.getSizeX(); i++) {
+            System.out.println(matriz.get(i, 0));
+            Vector row = new Vector();
+            row.add(matriz.get(i, 0));
+            model.addRow(row);
+
+        }
+    }
+
     private class RowListener implements ListSelectionListener {//método chamado quando é selecionado linha da tabela 2
 
         public void valueChanged(ListSelectionEvent event) {
@@ -1027,93 +1292,7 @@ public class TelaPrincipal extends javax.swing.JFrame {
 
             try {
                 String urlApi = (String) tblUrl.getValueAt(linhaSelecionada, 0);
-                txtURLAPI.setText(urlApi);
-
-                txtAPI.setVisible(false);
-
-                new Thread() {//pegando nome do API pelo URL no SSG
-                    @Override
-                    public void run() {
-                        try {
-                            String api_outdoor = CRUDOTK.getAPI(urlApi);
-                            api_outdoor = "<html><font color='green'>" + api_outdoor + "</font></html>";
-                            txtAPI.setText(api_outdoor);
-                            txtAPI.setVisible(true);
-                        } catch (Exception ex) {
-                            Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-                    }
-                }.start();
-
-                new Thread() {//pegando nome do API pelo banco heroku
-                    @Override
-                    public void run() {
-
-                        ConexaoBD conexaobd = new ConexaoBD();
-                        try {
-                            String api_outdoor = conexaobd.getAPI(urlApi, pegarAmbiente());
-                            if (!api_outdoor.equals("no_name")) {
-                                api_outdoor = "<html><font color='blue'>" + api_outdoor + "</font></html>";
-                                txtAPI.setText(api_outdoor);
-                                txtAPI.setVisible(true);
-                            }
-                        } catch (ClassNotFoundException ex) {
-                            Logger.getLogger(TelaPrincipal.class.getName()).log(Level.SEVERE, null, ex);
-                        }
-
-                    }
-                }.start();
-
-                String matrix[][] = parseJsonToMatrix(jsonTxtArea.getText());
-
-                chkGet.setSelected(false);
-                chkPut.setSelected(false);
-                chkPost.setSelected(false);
-                chkDelete.setSelected(false);
-                chkAll.setSelected(false);
-                chkPatch.setSelected(false);
-
-                for (int i = 0; i < matrix.length; i++) {
-                    if (matrix[i][0].equals(txtURLAPI.getText())) {
-                        for (int j = 0; j < matrix[i].length; j++) {
-
-                            if ((j != 0) && matrix[i][j] != null) {
-                                JSONObject metodo = new JSONObject(matrix[i][j]);
-                                String keyMetodo = metodo.keys().next();
-                                int quota = (int) metodo.getJSONObject(keyMetodo).getInt("quota");
-                                switch (keyMetodo) {//TODO implementar a mesma coisa quando digitar algo no URL e client_key, vir tudo. para o caso do cliente não ter nenhum método a ser clicado na jtable
-                                    case "GET":
-                                        chkGet.setSelected(true);
-                                        spinCotaGet.setValue(quota);
-                                        break;
-                                    case "POST":
-                                        chkPost.setSelected(true);
-                                        spinCotaPost.setValue(quota);
-                                        break;
-                                    case "PUT":
-                                        chkPut.setSelected(true);
-                                        spinCotaPut.setValue(quota);
-                                        break;
-                                    case "DELETE":
-                                        chkDelete.setSelected(true);
-                                        spinCotaDelete.setValue(quota);
-                                        break;
-                                    case "ALL":
-                                        chkAll.setSelected(true);
-                                        spinCotaAll.setValue(quota);
-                                        break;
-                                    case "PATCH":
-                                        chkPatch.setSelected(true);
-                                        spinCotaPatch.setValue(quota);
-                                        break;
-                                }
-
-                            }
-                        }
-                    }
-
-                }
-
+                txtURLAPI.setText(urlApi);//listerner spotará esse setText fazendo com que chame o atualizarMetodos
             } catch (java.lang.ArrayIndexOutOfBoundsException ex) {
                 System.out.println("exceção:índice -1");
             }
@@ -1121,12 +1300,14 @@ public class TelaPrincipal extends javax.swing.JFrame {
         }
     }
 
-    public static String[][] parseJsonToMatrix(String typedJson) {
-        if (typedJson.isEmpty()) {
-            typedJson = "{\"APIsPermitidas_v2\":{}}";
-        }
+    public static String[][] parseJsonToMatrix(String typedJson) {//TODO inserir inteligência de armazenar o CRUD.APIsPermitidas, se tiver, aqui
         JSONObject jsonTypedObj = new JSONObject(typedJson);
-        jsonTypedObj = jsonTypedObj.getJSONObject("APIsPermitidas_v2");
+        try {
+            jsonTypedObj = jsonTypedObj.getJSONObject("APIsPermitidas_v2");
+        } catch (Exception ex) {
+            typedJson = "{\"APIsPermitidas_v2\":{}}";
+            jsonTypedObj = new JSONObject(typedJson);
+        }
 
         Iterator<String> keys = jsonTypedObj.keys();
         int matrizUrl = 0;
@@ -1173,10 +1354,12 @@ public class TelaPrincipal extends javax.swing.JFrame {
                 if ("Nimbus".equals(info.getName())) {
                     javax.swing.UIManager.setLookAndFeel(info.getClassName());
                     break;
+
                 }
             }
         } catch (ClassNotFoundException | InstantiationException | IllegalAccessException ex) {
-            java.util.logging.Logger.getLogger(TelaPrincipal.class.getName()).log(java.util.logging.Level.SEVERE, null, ex);
+            java.util.logging.Logger.getLogger(TelaPrincipal.class
+                    .getName()).log(java.util.logging.Level.SEVERE, null, ex);
         }
         //</editor-fold>
 

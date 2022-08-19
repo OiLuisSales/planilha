@@ -14,6 +14,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.swing.JOptionPane;
 
 /**
  *
@@ -61,9 +62,9 @@ public class TelaLogin extends javax.swing.JFrame {
 
         setDefaultCloseOperation(javax.swing.WindowConstants.EXIT_ON_CLOSE);
 
-        jLabel1.setText("Login");
+        jLabel1.setText("Login de rede");
 
-        jLabel2.setText("Password");
+        jLabel2.setText("Password + OTP");
 
         btnLogin.setText("Go!");
         btnLogin.addActionListener(new java.awt.event.ActionListener() {
@@ -88,15 +89,14 @@ public class TelaLogin extends javax.swing.JFrame {
         getContentPane().setLayout(layout);
         layout.setHorizontalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
+                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
+                .addComponent(btnDumpOTKtoSQL)
+                .addGap(21, 21, 21))
             .addGroup(layout.createSequentialGroup()
-                .addGap(85, 85, 85)
-                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
+                .addGap(81, 81, 81)
+                .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addGroup(layout.createSequentialGroup()
-                        .addComponent(jLabel3)
-                        .addGap(18, 18, 18)
-                        .addComponent(listServer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                    .addGroup(layout.createSequentialGroup()
-                        .addGap(25, 25, 25)
                         .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                             .addComponent(jLabel2)
                             .addComponent(jLabel1))
@@ -105,12 +105,12 @@ public class TelaLogin extends javax.swing.JFrame {
                             .addComponent(btnLogin)
                             .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING, false)
                                 .addComponent(campoLogin)
-                                .addComponent(campoPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 121, javax.swing.GroupLayout.PREFERRED_SIZE)))))
+                                .addComponent(campoPassword, javax.swing.GroupLayout.PREFERRED_SIZE, 121, javax.swing.GroupLayout.PREFERRED_SIZE))))
+                    .addGroup(layout.createSequentialGroup()
+                        .addComponent(jLabel3)
+                        .addGap(18, 18, 18)
+                        .addComponent(listServer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE)))
                 .addContainerGap(83, Short.MAX_VALUE))
-            .addGroup(javax.swing.GroupLayout.Alignment.TRAILING, layout.createSequentialGroup()
-                .addContainerGap(javax.swing.GroupLayout.DEFAULT_SIZE, Short.MAX_VALUE)
-                .addComponent(btnDumpOTKtoSQL)
-                .addGap(21, 21, 21))
         );
         layout.setVerticalGroup(
             layout.createParallelGroup(javax.swing.GroupLayout.Alignment.LEADING)
@@ -119,7 +119,7 @@ public class TelaLogin extends javax.swing.JFrame {
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.BASELINE)
                     .addComponent(jLabel3)
                     .addComponent(listServer, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
-                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 56, Short.MAX_VALUE)
+                .addPreferredGap(javax.swing.LayoutStyle.ComponentPlacement.RELATED, 52, Short.MAX_VALUE)
                 .addGroup(layout.createParallelGroup(javax.swing.GroupLayout.Alignment.TRAILING)
                     .addComponent(jLabel1)
                     .addComponent(campoLogin, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
@@ -129,7 +129,7 @@ public class TelaLogin extends javax.swing.JFrame {
                     .addComponent(campoPassword, javax.swing.GroupLayout.PREFERRED_SIZE, javax.swing.GroupLayout.DEFAULT_SIZE, javax.swing.GroupLayout.PREFERRED_SIZE))
                 .addGap(37, 37, 37)
                 .addComponent(btnLogin)
-                .addGap(31, 31, 31)
+                .addGap(35, 35, 35)
                 .addComponent(btnDumpOTKtoSQL)
                 .addGap(25, 25, 25))
         );
@@ -166,41 +166,57 @@ public class TelaLogin extends javax.swing.JFrame {
         switch (server) {//configurando tabela
             case "apimdev":
                 ConexaoBD.setTableBD("Table_DEV_INT");
+                server = "amgdx01:8443";
                 break;
             case "apimhml.oi.net.br":
                 ConexaoBD.setTableBD("Table_HML_EXT");
+                server = "amghx01:8443";
                 break;
             case "apim.oi.net.br":
                 ConexaoBD.setTableBD("Table_PRD_EXT");
+                server = "amgrx01a:8443";
                 break;
             case "apimbss.oi.net.br":
                 ConexaoBD.setTableBD("Table_BSS_EXT");
+                server = "amgpx08a:8443";
                 break;
             case "apimhmllocal.intranet":
                 ConexaoBD.setTableBD("Table_HML_INT");
+                server = "amghx03:8443";
                 break;
             case "apimlocal.intranet":
                 ConexaoBD.setTableBD("Table_PRD_INT");
+                server = "amgpx03a:8443";
                 break;
             case "apimbsslocal.intranet":
                 ConexaoBD.setTableBD("Table_BSS_INT");
+                server = "amgpx09a:8443";
                 break;
             case "apimoiplaylocal.intranet":
                 ConexaoBD.setTableBD("Table_PLAY_INT");
+                server = "amgpx20a:8443";
                 break;
             case "apimlocaloiplay.oi.net.br":
                 ConexaoBD.setTableBD("Table_PLAY_EXT");
+                server = "amgpx18a:8443";
                 break;
         }
         return server;
     }
     private void btnDumpOTKtoSQLActionPerformed(java.awt.event.ActionEvent evt) {//GEN-FIRST:event_btnDumpOTKtoSQLActionPerformed
+       
+        if(campoLogin.getText().equals("mawdmin")){
+            
         try {
             pegarAmbiente();
             DumpCA.dumpCAOTK();
         } catch (ClassNotFoundException | SQLException | IOException ex) {
             Logger.getLogger(TelaLogin.class.getName()).log(Level.SEVERE, null, ex);
         }
+        }else{
+            JOptionPane.showMessageDialog(rootPane, "Usuário não permitido a fazer dump", "Erro", JOptionPane.ERROR_MESSAGE);
+        }
+        
     }//GEN-LAST:event_btnDumpOTKtoSQLActionPerformed
 
     /**

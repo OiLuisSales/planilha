@@ -62,7 +62,7 @@ public class DumpCA {
                 semAPI = true;
             }
             if (semAPI) {
-                conexaobd.insertBD("no_name", "Cadastro", "Cadastro", 0, name, client_ident, "dev", 1, type, description, organization, getTableBD());
+                conexaobd.insertBD("no_name", "Cadastro", "Cadastro", 0, name, client_ident, "dev", 1,false ,type, description, organization, getTableBD(),"Dump de arquivos");
                 continue;
             } else {
                 Iterator<String> keys = apisPermitidas.keys();
@@ -110,7 +110,7 @@ public class DumpCA {
                             break;
                     }
 
-                    conexaobd.insertBD("no_name", URL, metodo, cota, name, client_ident, "dev", 1, type, description, organization, getTableBD());
+                    conexaobd.insertBD("no_name", URL, metodo, cota, name, client_ident, "dev", 1, true, type, description, organization, getTableBD(),"Dump de arquivos");
                 }
 
             }

@@ -71,7 +71,7 @@ public class GetCaPermissao {
         SSLTool ssltool = new SSLTool();
         ssltool.disableCertificateValidation();
         
-        String url = ("https://apimhml.oi.net.br"+urlLogin);//URL de login fixado na AMGHX01
+        String url = (server+urlLogin);
         URL obj = new URL(url);
         HttpsURLConnection con = (HttpsURLConnection) obj.openConnection();
 
